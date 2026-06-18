@@ -1,0 +1,182 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
+import { useAuth } from '@/hooks/useAuth'
+import { XPBar } from '@/components/game/XPBar'
+import { RankBadge } from '@/components/game/RankBadge'
+import { xpForLevel, CATEGORY_LABELS } from '@/lib/game-logic'
+import { getRank } from '@/lib/ranks'
+
+const ATTR_ICONS: Record<string, string> = { strength: '💪', intelligence: '🧠', discipline: '⚡', focus: '🎯', vitality: '❤️', charisma: '✨', wisdom: '🌟', creativity: '🎨' }
+const ATTR_LABELS: Record<string, string> = { strength: 'Força', intelligence: 'Inteligência', discipline: 'Disciplina', focus: 'Foco', vitality: 'Vitalidade', charisma: 'Carisma', wisdom: 'Sabedoria', creativity: 'Criatividade' }
+const ATTR_SHORT: Record<string, string> = { strength: 'Força', intelligence: 'Intel.', discipline: 'Discip.', focus: 'Foco', vitality: 'Vital.', charisma: 'Carisma', wisdom: 'Sabed.', creativity: 'Criativ.' }
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    fetch('/api/user/profile').then(r => r.json()).then(d => { setProfile(d); setLoading(false) })
+  }, [])
+
+  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (!profile) return null
+
+  const attrs = profile.attributes || {}
+  const equipped = profile.inventory || []
+  const radarData = Object.entries(ATTR_LABELS).map(([key, label]) => ({
+    label: ATTR_SHORT[key] || label,
+    value: (attrs[key] as number) || 0,
+  }))
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-white">Perfil do Personagem</h1>
+
+      {/* Hero Card */}
+      <div className="glass neon-border rounded-2xl p-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-purple-600/30 border-2 border-indigo-500/40 flex items-center justify-center text-4xl neon-glow shrink-0">
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full rounded-2xl object-cover" /> : profile.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <h2 className="text-2xl font-bold text-white">{profile.name}</h2>
+              <RankBadge points={profile.arenaPoints || 0} size="sm" />
+            </div>
+            {profile.selectedClass && (
+              <p className="text-sm font-medium mt-0.5" style={{ color: profile.selectedClass.color }}>
+                {profile.selectedClass.icon} {profile.selectedClass.name}
+              </p>
+            )}
+            <p className="text-slate-500 text-sm">{profile.email}</p>
+            <p className="text-xs mt-0.5" style={{ color: getRank(profile.arenaPoints || 0).color }}>
+              🎖️ {getRank(profile.arenaPoints || 0).label} · {profile.arenaPoints || 0} pts de Arena
+            </p>
+            <div className="flex flex-wrap gap-4 mt-3 justify-center sm:justify-start">
+              <div className="text-center">
+                <p className="text-xl font-bold text-white">{profile.level}</p>
+                <p className="text-xs text-slate-500">Nível</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold text-amber-400">{profile.essences?.toLocaleString()}</p>
+                <p className="text-xs text-slate-500">Essências</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold text-orange-400">{profile.currentStreak}</p>
+                <p className="text-xs text-slate-500">Streak</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold text-indigo-400">{profile.totalXp?.toLocaleString()}</p>
+                <p className="text-xs text-slate-500">XP Total</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <XPBar currentXp={profile.currentXp} xpForNextLevel={xpForLevel(profile.level)} level={profile.level} />
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Attributes — Radar */}
+        <div className="glass neon-border rounded-2xl p-5">
+          <h3 className="font-semibold text-slate-200 mb-2">Atributos</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <RadarChart data={radarData} outerRadius="72%">
+              <PolarGrid stroke="#1e1e3a" />
+              <PolarAngleAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+              <Radar dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill="#6366f1" fillOpacity={0.35} />
+            </RadarChart>
+          </ResponsiveContainer>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
+            {Object.entries(ATTR_LABELS).map(([key, label]) => (
+              <div key={key} className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 flex items-center gap-1">{ATTR_ICONS[key]} {label}</span>
+                <span className="text-indigo-400 font-semibold">{(attrs[key] as number) || 0}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Equipped Items */}
+        <div className="space-y-4">
+          <div className="glass neon-border rounded-2xl p-5">
+            <h3 className="font-semibold text-slate-200 mb-4">Equipamentos Ativos</h3>
+            {equipped.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-4">Nenhum item equipado</p>
+            ) : (
+              <div className="space-y-2">
+                {equipped.map((inv: any) => (
+                  <div key={inv.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
+                    <span className="text-2xl">{inv.equipment.icon}</span>
+                    <div>
+                      <p className="text-sm font-medium text-slate-200">{inv.equipment.name}</p>
+                      <p className="text-xs text-slate-500">{inv.equipment.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent Achievements */}
+          <div className="glass neon-border rounded-2xl p-5">
+            <h3 className="font-semibold text-slate-200 mb-4">Conquistas Recentes</h3>
+            {profile.userAchievements?.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-4">Nenhuma conquista ainda</p>
+            ) : (
+              <div className="space-y-2">
+                {profile.userAchievements?.map((ua: any) => (
+                  <div key={ua.id} className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                    <span className="text-2xl">{ua.achievement.icon}</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-300">{ua.achievement.name}</p>
+                      <p className="text-xs text-slate-500">{new Date(ua.unlockedAt).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="glass neon-border rounded-2xl p-5">
+        <h3 className="font-semibold text-slate-200 mb-4">Estatísticas Gerais</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-slate-800/40 rounded-xl">
+            <p className="text-2xl font-bold text-white">{profile.stats?.totalTasksCompleted || 0}</p>
+            <p className="text-xs text-slate-500 mt-1">Tarefas Concluídas</p>
+          </div>
+          <div className="text-center p-4 bg-slate-800/40 rounded-xl">
+            <p className="text-2xl font-bold text-indigo-400">{profile.totalXp?.toLocaleString()}</p>
+            <p className="text-xs text-slate-500 mt-1">XP Total</p>
+          </div>
+          <div className="text-center p-4 bg-slate-800/40 rounded-xl">
+            <p className="text-2xl font-bold text-orange-400">{profile.bestStreak}</p>
+            <p className="text-xs text-slate-500 mt-1">Melhor Streak</p>
+          </div>
+          <div className="text-center p-4 bg-slate-800/40 rounded-xl">
+            <p className="text-2xl font-bold text-amber-400">{profile.essences?.toLocaleString()}</p>
+            <p className="text-xs text-slate-500 mt-1">Essências</p>
+          </div>
+        </div>
+        {profile.stats?.tasksByCategory?.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs text-slate-500 mb-2">Categorias mais trabalhadas</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.stats.tasksByCategory.sort((a: any, b: any) => b._count - a._count).slice(0, 5).map((c: any) => (
+                <span key={c.category} className="text-xs bg-slate-800 px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700/60">
+                  {CATEGORY_LABELS[c.category as keyof typeof CATEGORY_LABELS]} — {c._count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
