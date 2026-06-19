@@ -22,6 +22,7 @@ export interface BattleData {
   levelUps: number[]
   newLevel: number
   rankUp?: { tier: string; label: string; essences: number } | null
+  chestDrop?: { rank: string; name: string; icon: string } | null
 }
 
 interface Props {
@@ -127,6 +128,12 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
                 </span>
               )}
             </div>
+            {battle.chestDrop && (
+              <div className="mb-4 p-2.5 rounded-xl border bg-purple-500/10 border-purple-500/30 flex items-center justify-center gap-2">
+                <span className="text-xl">{battle.chestDrop.icon}</span>
+                <p className="text-sm font-semibold text-purple-300">Drop: {battle.chestDrop.name}!</p>
+              </div>
+            )}
             <Button variant="primary" onClick={onClose} className="w-full">Continuar</Button>
           </div>
         )}

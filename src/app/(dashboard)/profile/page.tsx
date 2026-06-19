@@ -4,6 +4,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import { useAuth } from '@/hooks/useAuth'
 import { XPBar } from '@/components/game/XPBar'
 import { RankBadge } from '@/components/game/RankBadge'
+import { EvolutionAvatar } from '@/components/game/EvolutionAvatar'
 import { xpForLevel, CATEGORY_LABELS } from '@/lib/game-logic'
 import { getRank } from '@/lib/ranks'
 
@@ -37,9 +38,7 @@ export default function ProfilePage() {
       {/* Hero Card */}
       <div className="glass neon-border rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-purple-600/30 border-2 border-indigo-500/40 flex items-center justify-center text-4xl neon-glow shrink-0">
-            {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full rounded-2xl object-cover" /> : profile.name.charAt(0).toUpperCase()}
-          </div>
+          <EvolutionAvatar name={profile.name} avatarUrl={profile.avatarUrl} level={profile.level} />
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center gap-2 justify-center sm:justify-start">
               <h2 className="text-2xl font-bold text-white">{profile.name}</h2>

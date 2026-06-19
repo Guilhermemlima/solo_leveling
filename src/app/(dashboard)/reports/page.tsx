@@ -24,6 +24,20 @@ export default function ReportsPage() {
         <p className="text-slate-400 text-sm">Acompanhe sua evolução ao longo do tempo</p>
       </div>
 
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          ['Tempo planejado', `${data.plannedMinutes} min`],
+          ['Tempo realizado', `${data.actualMinutes} min`],
+          ['Metas atingidas', `${data.targetCompletion}%`],
+          ['Melhor horário', data.bestHour],
+        ].map(([label, value]) => (
+          <div key={label} className="glass rounded-xl p-4 border border-slate-700/40">
+            <p className="text-xs text-slate-500">{label}</p>
+            <p className="text-xl font-bold text-white mt-1">{value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Weekly tasks */}
         <div className="glass neon-border rounded-2xl p-5">

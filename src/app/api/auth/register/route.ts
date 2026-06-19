@@ -1,58 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword, signToken } from '@/lib/auth'
+import { parseJson, registerSchema } from '@/lib/validation'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const limiter = rateLimit(clientKey(req, 'register'), 5, 60 * 60_000)
+  if (!limiter.allowed) return NextResponse.json({ error: 'Muitas contas criadas neste dispositivo' }, { status: 429 })
+  const parsed = parseJson(registerSchema, await req.json())
+  if (!parsed.data) return NextResponse.json({ error: parsed.error }, { status: 400 })
+  const { name, email, password } = parsed.data
+  if (await prisma.user.findUnique({ where: { email } })) {
+    return NextResponse.json({ error: 'E-mail já cadastrado' }, { status: 409 })
+  }
   try {
-    const { name, email, password } = await req.json()
-
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 })
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json({ error: 'Senha deve ter ao menos 6 caracteres' }, { status: 400 })
-    }
-
-    const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) {
-      return NextResponse.json({ error: 'Email já cadastrado' }, { status: 409 })
-    }
-
-    const passwordHash = await hashPassword(password)
-
+    const missions = await prisma.mission.findMany({ select: { id: true } })
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
-        passwordHash,
+        name, email, passwordHash: await hashPassword(password),
         attributes: { create: {} },
+        userMissions: { create: missions.map(mission => ({ missionId: mission.id })) },
       },
-      select: { id: true, name: true, email: true, level: true }
+      select: { id: true, name: true, email: true, level: true, onboardingCompleted: true },
     })
-
-    // Assign special missions
-    const specialMissions = await prisma.mission.findMany({ where: { type: 'SPECIAL' } })
-    const dailyMissions = await prisma.mission.findMany({ where: { type: 'DAILY' } })
-    const weeklyMissions = await prisma.mission.findMany({ where: { type: 'WEEKLY' } })
-    const allMissions = [...specialMissions, ...dailyMissions, ...weeklyMissions]
-
-    await prisma.userMission.createMany({
-      data: allMissions.map(m => ({ userId: user.id, missionId: m.id }))
+    const response = NextResponse.json({ user, message: 'Conta criada com sucesso' }, { status: 201 })
+    response.cookies.set('ascend-token', signToken({ userId: user.id, email: user.email }), {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax',
+      path: '/', maxAge: 60 * 60 * 24 * 7,
     })
-
-    const token = signToken({ userId: user.id, email: user.email })
-
-    const res = NextResponse.json({ user, message: 'Conta criada com sucesso!' }, { status: 201 })
-    res.cookies.set('ascend-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    })
-    return res
+    return response
   } catch (error) {
     console.error('Register error:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
+    return NextResponse.json({ error: 'Não foi possível criar a conta' }, { status: 500 })
   }
 }

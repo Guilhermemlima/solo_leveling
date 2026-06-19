@@ -8,52 +8,148 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  name            String
-  email           String    @unique
-  passwordHash    String
-  avatarUrl       String?
-  level           Int       @default(1)
-  currentXp       Int       @default(0)
-  totalXp         Int       @default(0)
-  essences        Int       @default(0)
-  currentStreak   Int       @default(0)
-  bestStreak      Int       @default(0)
-  lastActiveDate  DateTime?
-  penaltiesEnabled Boolean  @default(false)
-  arenaWins       Int       @default(0)
-  arenaLosses     Int       @default(0)
-  arenaPoints     Int       @default(0)
-  selectedClassId String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  passwordHash         String
+  avatarUrl            String?
+  level                Int       @default(1)
+  currentXp            Int       @default(0)
+  totalXp              Int       @default(0)
+  essences             Int       @default(0)
+  currentStreak        Int       @default(0)
+  bestStreak           Int       @default(0)
+  lastActiveDate       DateTime?
+  penaltiesEnabled     Boolean   @default(false)
+  arenaWins            Int       @default(0)
+  arenaLosses          Int       @default(0)
+  arenaPoints          Int       @default(0)
+  seasonPoints         Int       @default(0)
+  onboardingCompleted  Boolean   @default(false)
+  timezone             String    @default("America/Sao_Paulo")
+  goals                String[]  @default([])
+  availableMinutes     Int       @default(30)
+  experienceLevel      String    @default("BEGINNER")
+  availableEquipment   String[]  @default([])
+  healthNotes          String?
+  specialization       String?
+  notificationsEnabled Boolean   @default(false)
+  selectedClassId      String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  selectedClass    Class?            @relation(fields: [selectedClassId], references: [id])
-  tasks            Task[]
-  attributes       Attribute?
-  userMissions     UserMission[]
-  inventory        Inventory[]
-  userAchievements UserAchievement[]
-  activityHistory  ActivityHistory[]
-  battles          Battle[]
+  selectedClass      Class?              @relation(fields: [selectedClassId], references: [id])
+  tasks              Task[]
+  attributes         Attribute?
+  userMissions       UserMission[]
+  inventory          Inventory[]
+  userAchievements   UserAchievement[]
+  activityHistory    ActivityHistory[]
+  battles            Battle[]
+  taskExecutions     TaskExecution[]
+  actionReceipts     ActionReceipt[]
+  feedback           Feedback[]
+  groupMemberships   GroupMember[]
+  groupContributions GroupContribution[]
+  userChests         UserChest[]
+  chestOpenings      ChestOpeningLog[]
+  forgeLogs          ForgeLog[]
 
   @@map("users")
 }
 
+model Chest {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  rank        String // E | D | C | B | A | S | SPECIAL
+  description String
+  icon        String
+  createdAt   DateTime @default(now())
+
+  userChests UserChest[]
+  openings   ChestOpeningLog[]
+
+  @@map("chests")
+}
+
+model UserChest {
+  id         String   @id @default(cuid())
+  userId     String
+  chestId    String
+  quantity   Int      @default(1)
+  source     String   @default("REWARD")
+  acquiredAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chest Chest @relation(fields: [chestId], references: [id])
+
+  @@unique([userId, chestId])
+  @@map("user_chests")
+}
+
+model Enemy {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  name             String
+  rank             String // E | D | C | B | A | S
+  type             String
+  isBoss           Boolean  @default(false)
+  hp               Int
+  attack           Int
+  defense          Int
+  weakness         String?
+  resistance       String?
+  specialMechanic  String?
+  recommendedPower Int
+  drops            String?
+  icon             String
+  createdAt        DateTime @default(now())
+
+  @@map("enemies")
+}
+
+model ChestOpeningLog {
+  id          String   @id @default(cuid())
+  userId      String
+  chestId     String
+  rewardsJson Json
+  createdAt   DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chest Chest @relation(fields: [chestId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("chest_opening_logs")
+}
+
 model Battle {
-  id           String   @id @default(cuid())
-  userId       String
-  opponentName String
-  opponentType String // BOT | PLAYER
-  won          Boolean
-  xpChange     Int      @default(0)
-  essenceChange Int     @default(0)
-  pointsChange Int      @default(0)
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String
+  opponentName  String
+  opponentType  String // BOT | PLAYER
+  won           Boolean
+  xpChange      Int      @default(0)
+  essenceChange Int      @default(0)
+  pointsChange  Int      @default(0)
+  seasonKey     String?
+  createdAt     DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("battles")
+}
+
+model ArenaSeason {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  startsAt  DateTime
+  endsAt    DateTime
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("arena_seasons")
 }
 
 model Attribute {
@@ -74,24 +170,78 @@ model Attribute {
 }
 
 model Task {
-  id            String         @id @default(cuid())
-  userId        String
-  title         String
-  description   String?
-  category      TaskCategory
-  difficulty    TaskDifficulty
-  recurrence    TaskRecurrence @default(ONCE)
-  dueDate       DateTime?
-  xpReward      Int
-  essenceReward Int
-  status        TaskStatus     @default(PENDING)
-  completedAt   DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id               String         @id @default(cuid())
+  userId           String
+  title            String
+  description      String?
+  category         TaskCategory
+  difficulty       TaskDifficulty
+  recurrence       TaskRecurrence @default(ONCE)
+  dueDate          DateTime?
+  xpReward         Int
+  essenceReward    Int
+  status           TaskStatus     @default(PENDING)
+  completedAt      DateTime?
+  targetValue      Float?
+  targetUnit       String?
+  estimatedMinutes Int?
+  isTemplate       Boolean        @default(false)
+  templateName     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subtasks   TaskSubtask[]
+  executions TaskExecution[]
+
+  @@map("tasks")
+}
+
+model TaskSubtask {
+  id        String  @id @default(cuid())
+  taskId    String
+  title     String
+  position  Int     @default(0)
+  completed Boolean @default(false)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_subtasks")
+}
+
+model TaskExecution {
+  id                  String   @id @default(cuid())
+  taskId              String
+  userId              String
+  idempotencyKey      String   @unique
+  actualValue         Float?
+  durationMinutes     Int?
+  perceivedDifficulty Int?
+  notes               String?
+  xpGained            Int      @default(0)
+  essenceGained       Int      @default(0)
+  completedAt         DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt])
+  @@map("task_executions")
+}
+
+model ActionReceipt {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  key       String
+  result    Json?
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("tasks")
+  @@unique([userId, action, key])
+  @@index([createdAt])
+  @@map("action_receipts")
 }
 
 model Class {
@@ -162,16 +312,37 @@ model Equipment {
 }
 
 model Inventory {
-  id          String   @id @default(cuid())
-  userId      String
-  equipmentId String
-  isEquipped  Boolean  @default(false)
-  acquiredAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  equipmentId    String
+  isEquipped     Boolean  @default(false)
+  upgradeLevel   Int      @default(0)
+  durability     Int      @default(100)
+  durabilityMax  Int      @default(100)
+  acquiredAt     DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   equipment Equipment @relation(fields: [equipmentId], references: [id])
+  forgeLogs ForgeLog[]
 
+  @@unique([userId, equipmentId])
   @@map("inventory")
+}
+
+model ForgeLog {
+  id          String   @id @default(cuid())
+  userId      String
+  inventoryId String
+  action      String   // UPGRADE | REPAIR | ENCHANT
+  success     Boolean
+  costEssences Int     @default(0)
+  detail      String?
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@map("forge_logs")
 }
 
 model Achievement {
@@ -212,6 +383,79 @@ model ActivityHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("activity_history")
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String
+  message   String
+  rating    Int?
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("feedback")
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  inviteCode  String   @unique
+  createdAt   DateTime @default(now())
+
+  members    GroupMember[]
+  challenges GroupChallenge[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupChallenge {
+  id          String   @id @default(cuid())
+  groupId     String
+  title       String
+  description String?
+  target      Int
+  reward      Int      @default(0)
+  startsAt    DateTime @default(now())
+  endsAt      DateTime
+  createdAt   DateTime @default(now())
+
+  group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contributions GroupContribution[]
+
+  @@map("group_challenges")
+}
+
+model GroupContribution {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String
+  value       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  challenge GroupChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+  @@map("group_contributions")
 }
 
 enum TaskCategory {

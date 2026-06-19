@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Mail, Lock, User } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Lock, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/hooks/useAuth'
@@ -28,7 +29,7 @@ export default function RegisterPage() {
       const data = await res.json()
       if (!res.ok) { toast(data.error, 'error'); return }
       setUser(data.user)
-      toast('Bem-vindo ao Ascend System!', 'success')
+      toast('Bem-vindo ao Chi Navy System!', 'success')
       router.push('/dashboard')
     } catch {
       toast('Erro ao criar conta.', 'error')
@@ -41,11 +42,11 @@ export default function RegisterPage() {
     <div className="w-full max-w-md relative z-10">
       <div className="glass neon-border rounded-2xl p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 neon-glow">
-            <Zap size={26} className="text-white" />
+          <div className="flex justify-center mb-3">
+            <Image src="/logo.png" alt="Ascend System" width={80} height={80} className="rounded-2xl neon-glow" priority />
           </div>
-          <h1 className="text-2xl font-bold text-white">Criar Conta</h1>
-          <p className="text-slate-400 text-sm mt-1">Inicie sua jornada de evolução pessoal</p>
+          <h1 className="text-2xl font-bold text-white">Despertar no Sistema</h1>
+          <p className="text-slate-400 text-sm mt-1">Crie seu caçador e comece a evoluir pela vida real</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

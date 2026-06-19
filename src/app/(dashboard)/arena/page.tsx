@@ -36,7 +36,11 @@ export default function ArenaPage() {
       const body = opponent.type === 'BOT'
         ? { type: 'BOT', difficulty: opponent.difficulty }
         : { type: 'PLAYER', opponentId: opponent.id.replace('player:', '') }
-      const res = await fetch('/api/arena/battle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await fetch('/api/arena/battle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify(body),
+      })
       const result = await res.json()
       if (!res.ok) { toast(result.error, 'error'); return }
       setBattle(result)
@@ -69,6 +73,11 @@ export default function ArenaPage() {
           <Link href="/leaderboard">
             <Button variant="secondary"><Medal size={15} /> Ver Ranking</Button>
           </Link>
+        </div>
+
+        <div className="glass rounded-2xl p-4 border border-purple-500/20 flex flex-wrap items-center justify-between gap-3">
+          <div><p className="text-xs text-purple-300 uppercase tracking-wider">{data.season.name}</p><p className="text-sm text-slate-300">{p.seasonPoints} pontos sazonais</p></div>
+          <div className="text-right"><p className="text-xs text-slate-500">Batalhas restantes hoje</p><p className="text-xl font-bold text-white">{data.battlesRemaining}/20</p></div>
         </div>
 
         {/* Stats do jogador */}
@@ -113,6 +122,10 @@ export default function ArenaPage() {
                 <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
                   <Zap size={12} className="text-indigo-400" /> Poder {bot.power}
                 </div>
+                <div className="text-[11px] text-slate-500 mb-3 flex justify-between">
+                  <span className={bot.risk.color === 'red' ? 'text-red-400' : bot.risk.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'}>{bot.risk.label}</span>
+                  <span>+{bot.rewards.xp} XP · +{bot.rewards.essences} 💎</span>
+                </div>
                 <Button size="sm" variant="primary" className="w-full mt-auto" loading={fighting === bot.id} onClick={() => startBattle(bot)}>
                   <Swords size={13} /> Batalhar
                 </Button>
@@ -143,6 +156,10 @@ export default function ArenaPage() {
                   </div>
                   <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
                     <Zap size={12} className="text-indigo-400" /> Poder {pl.power}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mb-3 flex justify-between">
+                    <span className={pl.risk.color === 'red' ? 'text-red-400' : pl.risk.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'}>{pl.risk.label}</span>
+                    <span>+{pl.rewards.xp} XP · +15 pts</span>
                   </div>
                   <Button size="sm" variant="secondary" className="w-full mt-auto" loading={fighting === pl.id} onClick={() => startBattle(pl)}>
                     <Swords size={13} /> Desafiar

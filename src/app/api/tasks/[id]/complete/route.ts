@@ -1,159 +1,255 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
-import { calculateLevelUp, ATTRIBUTE_GAINS, STREAK_REWARDS, classXpMultiplier } from '@/lib/game-logic'
+import {
+  calculateLevelUp, ATTRIBUTE_GAINS, STREAK_REWARDS, classXpMultiplier,
+} from '@/lib/game-logic'
+import { completionSchema, parseJson } from '@/lib/validation'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
+import { getSpecialization } from '@/lib/specializations'
+import { chestRankForLevel, CHESTS } from '@/lib/chests'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthUser()
   if (!auth) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
+  const limiter = rateLimit(clientKey(req, 'complete-task', auth.userId), 20, 60_000)
+  if (!limiter.allowed) {
+    return NextResponse.json({ error: 'Muitas conclusões em sequência. Aguarde alguns segundos.' }, { status: 429 })
+  }
+
   const { id } = await params
+  const body = await req.json().catch(() => ({}))
+  const parsed = parseJson(completionSchema, body)
+  if (!parsed.data) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
-  const task = await prisma.task.findFirst({ where: { id, userId: auth.userId } })
-  if (!task) return NextResponse.json({ error: 'Tarefa não encontrada' }, { status: 404 })
-  if (task.status === 'COMPLETED') return NextResponse.json({ error: 'Tarefa já concluída' }, { status: 400 })
+  const idempotencyKey = req.headers.get('idempotency-key') || body.idempotencyKey
+  if (!idempotencyKey || typeof idempotencyKey !== 'string' || idempotencyKey.length > 100) {
+    return NextResponse.json({ error: 'Chave de idempotência ausente' }, { status: 400 })
+  }
 
-  const user = await prisma.user.findUnique({
-    where: { id: auth.userId },
-    include: { attributes: true, selectedClass: true }
+  const existing = await prisma.actionReceipt.findUnique({
+    where: { userId_action_key: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey } },
   })
-  if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+  if (existing?.result) return NextResponse.json(existing.result)
 
-  // Streak calculation (precisa vir antes do XP por causa do bônus de classe de streak)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null
-  lastActive?.setHours(0, 0, 0, 0)
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  let newStreak = user.currentStreak
-  let streakBonus = 0
-  const streakReward = { essences: 0, label: '' }
-
-  if (!lastActive || lastActive.getTime() === yesterday.getTime()) {
-    newStreak = user.currentStreak + 1
-  } else if (lastActive.getTime() !== today.getTime()) {
-    newStreak = 1
-  }
-  const keepsStreak = newStreak > user.currentStreak
-
-  if (STREAK_REWARDS[newStreak]) {
-    streakBonus = STREAK_REWARDS[newStreak].essences
-    streakReward.essences = streakBonus
-    streakReward.label = STREAK_REWARDS[newStreak].label
-  }
-
-  // Bônus de classe aplicado a XP e Essências da tarefa
-  const classMult = classXpMultiplier(user.selectedClass?.bonusType, user.selectedClass?.bonusValue, task.category, keepsStreak)
-  const classBonusActive = classMult > 1
-  const xpGained = Math.round(task.xpReward * classMult)
-  const essenceFromTask = Math.round(task.essenceReward * classMult)
-
-  // Level up calculation (com o XP já bonificado)
-  const { level, currentXp, levelUps } = calculateLevelUp(user.level, user.currentXp, xpGained)
-
-  const levelUpBonus = levelUps.length > 0 ? levelUps.length * 50 : 0
-  const totalEssences = essenceFromTask + streakBonus + levelUpBonus
-
-  // Attribute gains
-  const attrGains = ATTRIBUTE_GAINS[task.category] || {}
-  const attrUpdate: Record<string, number> = {}
-  for (const [attr, gain] of Object.entries(attrGains)) {
-    attrUpdate[attr] = (user.attributes?.[attr as keyof typeof user.attributes] as number || 0) + (gain as number)
-  }
-
-  await prisma.$transaction([
-    prisma.task.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } }),
-    prisma.user.update({
-      where: { id: auth.userId },
-      data: {
-        level,
-        currentXp,
-        totalXp: { increment: xpGained },
-        essences: { increment: totalEssences },
-        currentStreak: newStreak,
-        bestStreak: Math.max(user.bestStreak, newStreak),
-        lastActiveDate: new Date(),
-      }
-    }),
-    ...(Object.keys(attrUpdate).length > 0
-      ? [prisma.attribute.update({ where: { userId: auth.userId }, data: attrUpdate })]
-      : []),
-    prisma.activityHistory.create({
-      data: {
-        userId: auth.userId,
-        type: 'TASK_COMPLETED',
-        description: `Tarefa concluída: ${task.title}`,
-        xpChange: xpGained,
-        essenceChange: totalEssences,
-      }
-    }),
-  ])
-
-  // Check achievements
-  const [totalCompleted, totalXpUser] = await Promise.all([
-    prisma.task.count({ where: { userId: auth.userId, status: 'COMPLETED' } }),
-    prisma.user.findUnique({ where: { id: auth.userId }, select: { totalXp: true, level: true, currentStreak: true } }),
-  ])
-
-  const achievementChecks = [
-    { type: 'TASKS_COMPLETED', value: totalCompleted },
-    { type: 'LEVEL', value: totalXpUser?.level || 1 },
-    { type: 'STREAK', value: totalXpUser?.currentStreak || 0 },
-    { type: 'TOTAL_XP', value: (totalXpUser?.totalXp || 0) + xpGained },
-  ]
-
-  for (const check of achievementChecks) {
-    const eligible = await prisma.achievement.findMany({
-      where: { requirementType: check.type, requirementValue: { lte: check.value } }
-    })
-    for (const ach of eligible) {
-      await prisma.userAchievement.upsert({
-        where: { userId_achievementId: { userId: auth.userId, achievementId: ach.id } },
-        update: {},
-        create: { userId: auth.userId, achievementId: ach.id }
+  try {
+    const result = await prisma.$transaction(async tx => {
+      await tx.actionReceipt.create({
+        data: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey },
       })
-    }
-  }
 
-  // Update mission progress
-  const activeMissions = await prisma.userMission.findMany({
-    where: { userId: auth.userId, status: 'ACTIVE' },
-    include: { mission: true }
-  })
-
-  for (const um of activeMissions) {
-    const m = um.mission
-    let newProgress = um.progress
-    const shouldIncrement = (
-      m.requirementType === 'TASKS_COMPLETED' ||
-      m.requirementType === 'DAILY_TASKS' ||
-      m.requirementType === 'WEEKLY_TASKS' ||
-      (m.requirementType === 'CATEGORY_HEALTH_TRAINING' && (task.category === 'HEALTH' || task.category === 'TRAINING')) ||
-      (m.requirementType === 'CATEGORY_STUDY' && task.category === 'STUDY') ||
-      (m.requirementType === 'WEEKLY_TRAINING' && task.category === 'TRAINING') ||
-      (m.requirementType === 'WEEKLY_STUDY' && task.category === 'STUDY')
-    )
-
-    if (shouldIncrement) {
-      newProgress = um.progress + 1
-      const isComplete = newProgress >= m.requirementValue
-      await prisma.userMission.update({
-        where: { id: um.id },
-        data: { progress: newProgress, ...(isComplete ? { status: 'COMPLETED', completedAt: new Date() } : {}) }
+      const task = await tx.task.findFirst({
+        where: { id, userId: auth.userId },
+        include: { subtasks: true },
       })
-    }
-  }
+      if (!task) throw new Error('TASK_NOT_FOUND')
 
-  return NextResponse.json({
-    xpGained,
-    essencesGained: totalEssences,
-    levelUps,
-    newLevel: level,
-    newStreak,
-    streakReward: streakBonus > 0 ? streakReward : null,
-    attributeGains: attrGains,
-    classBonus: classBonusActive ? { name: user.selectedClass?.name, percent: user.selectedClass?.bonusValue } : null,
-  })
+      const claimed = await tx.task.updateMany({
+        where: { id, userId: auth.userId, status: 'PENDING' },
+        data: { status: 'COMPLETED', completedAt: new Date() },
+      })
+      if (claimed.count !== 1) throw new Error('TASK_ALREADY_COMPLETED')
+
+      const user = await tx.user.findUnique({
+        where: { id: auth.userId },
+        include: { attributes: true, selectedClass: true },
+      })
+      if (!user) throw new Error('USER_NOT_FOUND')
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null
+      lastActive?.setHours(0, 0, 0, 0)
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+
+      let newStreak = user.currentStreak
+      if (!lastActive || lastActive.getTime() === yesterday.getTime()) newStreak += 1
+      else if (lastActive.getTime() !== today.getTime()) newStreak = 1
+
+      const keepsStreak = newStreak > user.currentStreak
+      const streakReward = STREAK_REWARDS[newStreak] || null
+      const classMult = classXpMultiplier(
+        user.selectedClass?.bonusType,
+        user.selectedClass?.bonusValue,
+        task.category,
+        keepsStreak
+      )
+      const specialization = getSpecialization(user.specialization)
+      const specializationMatches =
+        (specialization?.key === 'VANGUARD' && ['HEALTH', 'TRAINING'].includes(task.category)) ||
+        (specialization?.key === 'SCHOLAR' && task.category === 'STUDY') ||
+        (specialization?.key === 'ARCHITECT' && task.category === 'WORK') ||
+        (specialization?.key === 'HARMONIZER' && ['SOCIAL', 'CREATIVITY'].includes(task.category))
+      const specializationMult = specializationMatches ? 1.05 : 1
+
+      const xpGained = Math.round(task.xpReward * classMult * specializationMult)
+      const essenceFromTask = Math.round(task.essenceReward * classMult)
+      const { level, currentXp, levelUps } = calculateLevelUp(user.level, user.currentXp, xpGained)
+      const levelUpBonus = levelUps.length * 50
+      const totalEssences = essenceFromTask + (streakReward?.essences || 0) + levelUpBonus
+
+      const attrGains = ATTRIBUTE_GAINS[task.category] || {}
+      const attrUpdate: Record<string, number> = {}
+      for (const [attr, gain] of Object.entries(attrGains)) {
+        attrUpdate[attr] =
+          ((user.attributes?.[attr as keyof typeof user.attributes] as number) || 0) + Number(gain)
+      }
+
+      await tx.user.update({
+        where: { id: auth.userId },
+        data: {
+          level,
+          currentXp,
+          totalXp: { increment: xpGained },
+          essences: { increment: totalEssences },
+          currentStreak: newStreak,
+          bestStreak: Math.max(user.bestStreak, newStreak),
+          lastActiveDate: new Date(),
+        },
+      })
+      if (Object.keys(attrUpdate).length) {
+        await tx.attribute.update({ where: { userId: auth.userId }, data: attrUpdate })
+      }
+
+      // Caixa de recompensa ao subir de nível (Chi Navy)
+      let chestReward: { rank: string; name: string; icon: string } | null = null
+      if (levelUps.length > 0) {
+        const rank = chestRankForLevel(level)
+        const chest = await tx.chest.findUnique({ where: { key: CHESTS[rank].key } })
+        if (chest) {
+          await tx.userChest.upsert({
+            where: { userId_chestId: { userId: auth.userId, chestId: chest.id } },
+            update: { quantity: { increment: 1 } },
+            create: { userId: auth.userId, chestId: chest.id, quantity: 1, source: 'LEVEL_UP' },
+          })
+          chestReward = { rank, name: CHESTS[rank].name, icon: CHESTS[rank].icon }
+        }
+      }
+
+      await tx.taskSubtask.updateMany({ where: { taskId: id }, data: { completed: true } })
+      await tx.taskExecution.create({
+        data: {
+          taskId: id,
+          userId: auth.userId,
+          idempotencyKey,
+          ...parsed.data,
+          xpGained,
+          essenceGained: totalEssences,
+        },
+      })
+      await tx.activityHistory.create({
+        data: {
+          userId: auth.userId,
+          type: 'TASK_COMPLETED',
+          description: `Tarefa concluída: ${task.title}`,
+          xpChange: xpGained,
+          essenceChange: totalEssences,
+        },
+      })
+
+      const activeChallenges = await tx.groupChallenge.findMany({
+        where: {
+          endsAt: { gte: new Date() },
+          group: { members: { some: { userId: auth.userId } } },
+        },
+      })
+      for (const challenge of activeChallenges) {
+        await tx.groupContribution.upsert({
+          where: { challengeId_userId: { challengeId: challenge.id, userId: auth.userId } },
+          update: { value: { increment: 1 } },
+          create: { challengeId: challenge.id, userId: auth.userId, value: 1 },
+        })
+      }
+
+      const totalCompleted = await tx.taskExecution.count({ where: { userId: auth.userId } })
+      const achievementChecks = [
+        { type: 'TASKS_COMPLETED', value: totalCompleted },
+        { type: 'LEVEL', value: level },
+        { type: 'STREAK', value: newStreak },
+        { type: 'TOTAL_XP', value: user.totalXp + xpGained },
+      ]
+      for (const check of achievementChecks) {
+        const eligible = await tx.achievement.findMany({
+          where: { requirementType: check.type, requirementValue: { lte: check.value } },
+        })
+        for (const achievement of eligible) {
+          await tx.userAchievement.upsert({
+            where: {
+              userId_achievementId: { userId: auth.userId, achievementId: achievement.id },
+            },
+            update: {},
+            create: { userId: auth.userId, achievementId: achievement.id },
+          })
+        }
+      }
+
+      const activeMissions = await tx.userMission.findMany({
+        where: { userId: auth.userId, status: 'ACTIVE' },
+        include: { mission: true },
+      })
+      for (const userMission of activeMissions) {
+        const requirement = userMission.mission.requirementType
+        const shouldIncrement =
+          ['TASKS_COMPLETED', 'DAILY_TASKS', 'WEEKLY_TASKS'].includes(requirement) ||
+          (requirement === 'CATEGORY_HEALTH_TRAINING' && ['HEALTH', 'TRAINING'].includes(task.category)) ||
+          (requirement === 'CATEGORY_STUDY' && task.category === 'STUDY') ||
+          (requirement === 'WEEKLY_TRAINING' && task.category === 'TRAINING') ||
+          (requirement === 'WEEKLY_STUDY' && task.category === 'STUDY')
+        if (shouldIncrement) {
+          const progress = userMission.progress + 1
+          await tx.userMission.update({
+            where: { id: userMission.id },
+            data: {
+              progress,
+              ...(progress >= userMission.mission.requirementValue
+                ? { status: 'COMPLETED', completedAt: new Date() }
+                : {}),
+            },
+          })
+        }
+      }
+
+      const response = {
+        xpGained,
+        essencesGained: totalEssences,
+        levelUps,
+        newLevel: level,
+        newStreak,
+        streakReward,
+        attributeGains: attrGains,
+        classBonus: classMult > 1
+          ? { name: user.selectedClass?.name, percent: user.selectedClass?.bonusValue }
+          : null,
+        specializationBonus: specializationMatches
+          ? { name: specialization?.name, percent: 5 }
+          : null,
+        chestReward,
+      }
+
+      await tx.actionReceipt.update({
+        where: { userId_action_key: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey } },
+        data: { result: JSON.parse(JSON.stringify(response)) as Prisma.InputJsonValue },
+      })
+      return response
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+
+    return NextResponse.json(result)
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const receipt = await prisma.actionReceipt.findUnique({
+        where: { userId_action_key: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey } },
+      })
+      if (receipt?.result) return NextResponse.json(receipt.result)
+    }
+    const message = error instanceof Error ? error.message : ''
+    if (message === 'TASK_NOT_FOUND') return NextResponse.json({ error: 'Tarefa não encontrada' }, { status: 404 })
+    if (message === 'TASK_ALREADY_COMPLETED') {
+      return NextResponse.json({ error: 'Tarefa já concluída' }, { status: 409 })
+    }
+    console.error('Complete task error:', error)
+    return NextResponse.json({ error: 'Não foi possível concluir a tarefa' }, { status: 500 })
+  }
 }

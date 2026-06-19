@@ -20,13 +20,20 @@ export async function POST() {
     prisma.inventory.deleteMany({ where: { userId: auth.userId } }),
     prisma.userAchievement.deleteMany({ where: { userId: auth.userId } }),
     prisma.userMission.deleteMany({ where: { userId: auth.userId } }),
+    prisma.battle.deleteMany({ where: { userId: auth.userId } }),
+    prisma.actionReceipt.deleteMany({ where: { userId: auth.userId } }),
+    prisma.groupContribution.deleteMany({ where: { userId: auth.userId } }),
     prisma.attribute.update({
       where: { userId: auth.userId },
       data: { strength: 0, intelligence: 0, discipline: 0, focus: 0, vitality: 0, charisma: 0, wisdom: 0, creativity: 0 },
     }),
     prisma.user.update({
       where: { id: auth.userId },
-      data: { level: 1, currentXp: 0, totalXp: 0, essences: 0, currentStreak: 0, bestStreak: 0, lastActiveDate: null },
+      data: {
+        level: 1, currentXp: 0, totalXp: 0, essences: 0, currentStreak: 0,
+        bestStreak: 0, lastActiveDate: null, arenaWins: 0, arenaLosses: 0,
+        arenaPoints: 0, seasonPoints: 0,
+      },
     }),
     prisma.userMission.createMany({
       data: allMissions.map(m => ({ userId: auth.userId, missionId: m.id })),

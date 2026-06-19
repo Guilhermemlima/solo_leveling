@@ -14,6 +14,10 @@ interface User {
   currentStreak: number
   bestStreak: number
   penaltiesEnabled?: boolean
+  onboardingCompleted?: boolean
+  specialization?: string | null
+  arenaPoints?: number
+  notificationsEnabled?: boolean
   selectedClass?: { id: string; name: string; icon: string; color: string } | null
   attributes?: Record<string, number> | null
 }

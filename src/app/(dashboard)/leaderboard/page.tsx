@@ -24,6 +24,22 @@ export default function LeaderboardPage() {
         <p className="text-slate-400 text-sm">Suba de patente (E → S) acumulando Pontos de Arena em duelos contra jogadores.</p>
       </div>
 
+      <div className="glass rounded-2xl p-5 border border-purple-500/20">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div><p className="text-xs uppercase tracking-wider text-purple-300">{data.season?.name}</p><p className="text-sm text-slate-500">Ranking sazonal com recompensas cosméticas e Essências.</p></div>
+          <Swords className="text-purple-400" />
+        </div>
+        <div className="grid sm:grid-cols-3 gap-2">
+          {data.seasonLeaderboard.slice(0, 3).map((entry: any) => (
+            <div key={entry.id} className={`rounded-xl p-3 border ${entry.isMe ? 'border-indigo-500/40 bg-indigo-500/10' : 'border-slate-700/50 bg-slate-900/40'}`}>
+              <p className="text-xs text-slate-500">#{entry.position}</p>
+              <p className="text-sm font-semibold text-slate-200 truncate">{entry.name}</p>
+              <p className="text-xs text-purple-300">{entry.points} pts sazonais</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Minha patente */}
       {me && (
         <div className="glass neon-border rounded-2xl p-5">

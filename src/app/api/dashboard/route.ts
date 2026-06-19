@@ -33,6 +33,7 @@ export async function GET() {
           { createdAt: { gte: today, lt: tomorrow } }
         ]
       },
+      include: { subtasks: { orderBy: { position: 'asc' } } },
       orderBy: { createdAt: 'desc' },
       take: 10
     }),
@@ -46,10 +47,9 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       take: 10
     }),
-    prisma.task.findMany({
+    prisma.taskExecution.findMany({
       where: {
         userId: auth.userId,
-        status: 'COMPLETED',
         completedAt: { gte: weekStart }
       }
     })

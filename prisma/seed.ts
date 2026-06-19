@@ -75,7 +75,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash('admin123', 12)
   const testUser = await prisma.user.upsert({
     where: { email: 'teste@ascend.com' },
-    update: {},
+    update: { onboardingCompleted: true, specialization: 'ARCHITECT' },
     create: {
       name: 'Ascendente Teste',
       email: 'teste@ascend.com',
@@ -87,6 +87,9 @@ async function main() {
       currentStreak: 5,
       bestStreak: 5,
       lastActiveDate: new Date(),
+      onboardingCompleted: true,
+      specialization: 'ARCHITECT',
+      goals: ['WORK', 'STUDY', 'HEALTH'],
       selectedClassId: classes[4].id,
       attributes: {
         create: {
@@ -123,8 +126,16 @@ async function main() {
 
   // Give some inventory items
   await Promise.all([
-    prisma.inventory.create({ data: { userId: testUser.id, equipmentId: equipment[0].id, isEquipped: true } }),
-    prisma.inventory.create({ data: { userId: testUser.id, equipmentId: equipment[2].id, isEquipped: false } }),
+    prisma.inventory.upsert({
+      where: { userId_equipmentId: { userId: testUser.id, equipmentId: equipment[0].id } },
+      update: { isEquipped: true },
+      create: { userId: testUser.id, equipmentId: equipment[0].id, isEquipped: true },
+    }),
+    prisma.inventory.upsert({
+      where: { userId_equipmentId: { userId: testUser.id, equipmentId: equipment[2].id } },
+      update: {},
+      create: { userId: testUser.id, equipmentId: equipment[2].id, isEquipped: false },
+    }),
   ])
 
   console.log(`✅ Usuário de teste criado: teste@ascend.com / admin123`)
@@ -139,7 +150,7 @@ async function main() {
   for (const r of rivals) {
     await prisma.user.upsert({
       where: { email: r.email },
-      update: {},
+      update: { onboardingCompleted: true },
       create: {
         name: r.name,
         email: r.email,
@@ -149,6 +160,7 @@ async function main() {
         essences: 100,
         arenaPoints: r.points,
         arenaWins: Math.floor(r.points / 15),
+        onboardingCompleted: true,
         attributes: {
           create: { strength: r.str, intelligence: r.int, discipline: r.dis, focus: r.foc, vitality: r.vit, charisma: r.cha, wisdom: r.wis, creativity: r.cre },
         },
@@ -156,6 +168,51 @@ async function main() {
     })
   }
   console.log(`✅ ${rivals.length} rivais da Arena criados`)
+
+  // Caixas de recompensa (Chi Navy)
+  const chests = [
+    { key: 'CHEST_E', name: 'Caixa Rank E', rank: 'E', description: 'Uma caixa simples dos primeiros despertares.', icon: '📦' },
+    { key: 'CHEST_D', name: 'Caixa Rank D', rank: 'D', description: 'Recompensas modestas para caçadores iniciantes.', icon: '🎁' },
+    { key: 'CHEST_C', name: 'Caixa Rank C', rank: 'C', description: 'Brilho médio. Pode conter itens incomuns ou raros.', icon: '🧰' },
+    { key: 'CHEST_B', name: 'Caixa Rank B', rank: 'B', description: 'Energia arcana intensa. Itens raros e épicos.', icon: '💎' },
+    { key: 'CHEST_A', name: 'Caixa Rank A', rank: 'A', description: 'Partículas de poder. Itens épicos e lendários.', icon: '🏆' },
+    { key: 'CHEST_S', name: 'Caixa Rank S', rank: 'S', description: 'Explosão de aura. Itens lendários e míticos.', icon: '👑' },
+    { key: 'CHEST_SPECIAL', name: 'Caixa Especial', rank: 'SPECIAL', description: 'Um portal roxo de runas. Recompensa garantida e rara.', icon: '🔮' },
+  ]
+  for (const c of chests) {
+    await prisma.chest.upsert({ where: { key: c.key }, update: {}, create: c })
+  }
+  console.log(`✅ ${chests.length} caixas criadas`)
+
+  // Dá algumas caixas ao usuário de teste para demonstração
+  const eChest = await prisma.chest.findUnique({ where: { key: 'CHEST_E' } })
+  const cChest = await prisma.chest.findUnique({ where: { key: 'CHEST_C' } })
+  const sChest = await prisma.chest.findUnique({ where: { key: 'CHEST_S' } })
+  if (eChest && cChest && sChest) {
+    await prisma.userChest.upsert({ where: { userId_chestId: { userId: testUser.id, chestId: eChest.id } }, update: { quantity: 3 }, create: { userId: testUser.id, chestId: eChest.id, quantity: 3, source: 'SEED' } })
+    await prisma.userChest.upsert({ where: { userId_chestId: { userId: testUser.id, chestId: cChest.id } }, update: { quantity: 2 }, create: { userId: testUser.id, chestId: cChest.id, quantity: 2, source: 'SEED' } })
+    await prisma.userChest.upsert({ where: { userId_chestId: { userId: testUser.id, chestId: sChest.id } }, update: { quantity: 1 }, create: { userId: testUser.id, chestId: sChest.id, quantity: 1, source: 'SEED' } })
+  }
+  console.log(`✅ Caixas de demonstração entregues ao usuário de teste`)
+
+  // Inimigos do Bestiário (PvE)
+  const enemies = [
+    { key: 'skeleton', name: 'Esqueleto das Minas', rank: 'E', type: 'Morto-vivo', isBoss: false, hp: 120, attack: 14, defense: 6, weakness: 'Sagrado', resistance: 'Sombrio', specialMechanic: 'Reanima ossos ao perder metade do HP.', recommendedPower: 80, drops: 'Essências, Caixa Rank E', icon: '💀' },
+    { key: 'goblin', name: 'Goblin de Portal', rank: 'D', type: 'Demônio menor', isBoss: false, hp: 200, attack: 22, defense: 10, weakness: 'Fogo', resistance: '—', specialMechanic: 'Chama reforços fracos.', recommendedPower: 160, drops: 'Essências, Caixa Rank D', icon: '👺' },
+    { key: 'dark_wolf', name: 'Lobo Sombrio', rank: 'D', type: 'Besta', isBoss: false, hp: 240, attack: 28, defense: 8, weakness: 'Luz', resistance: 'Gelo', specialMechanic: 'Ataques rápidos em sequência.', recommendedPower: 190, drops: 'Essências, Caixa Rank D', icon: '🐺' },
+    { key: 'crystal_spider', name: 'Aranha Cristalina', rank: 'C', type: 'Inseto arcano', isBoss: false, hp: 380, attack: 38, defense: 16, weakness: 'Contundente', resistance: 'Perfuração', specialMechanic: 'Teias reduzem sua velocidade.', recommendedPower: 320, drops: 'Caixa Rank C, materiais', icon: '🕷️' },
+    { key: 'mist_mage', name: 'Mago da Névoa', rank: 'C', type: 'Conjurador', isBoss: false, hp: 320, attack: 48, defense: 12, weakness: 'Físico', resistance: 'Mágico', specialMechanic: 'Conjura explosões arcanas.', recommendedPower: 340, drops: 'Caixa Rank C, essência mágica', icon: '🧙' },
+    { key: 'corrupted_knight', name: 'Cavaleiro Corrompido', rank: 'B', type: 'Cavaleiro', isBoss: false, hp: 600, attack: 60, defense: 28, weakness: 'Sagrado', resistance: 'Sombrio', specialMechanic: 'Postura defensiva reduz dano recebido.', recommendedPower: 520, drops: 'Caixa Rank B, fragmento de armadura', icon: '⚔️' },
+    { key: 'void_assassin', name: 'Assassino do Vazio', rank: 'A', type: 'Assassino', isBoss: false, hp: 750, attack: 95, defense: 24, weakness: 'Luz', resistance: 'Sombrio', specialMechanic: 'Golpes críticos perfurantes.', recommendedPower: 820, drops: 'Caixa Rank A, lâmina sombria', icon: '🗡️' },
+    { key: 'rune_golem', name: 'Golem Rúnico', rank: 'A', type: 'Construto', isBoss: false, hp: 1100, attack: 70, defense: 50, weakness: 'Arcano', resistance: 'Físico', specialMechanic: 'Armadura rúnica absorve parte do dano.', recommendedPower: 880, drops: 'Caixa Rank A, núcleo rúnico', icon: '🗿' },
+    { key: 'shadow_chimera', name: 'Quimera Sombria', rank: 'A', type: 'Aberração', isBoss: false, hp: 950, attack: 88, defense: 34, weakness: 'Gelo', resistance: 'Fogo', specialMechanic: 'Três cabeças, três tipos de ataque.', recommendedPower: 900, drops: 'Caixa Rank A, essência mítica', icon: '🐉' },
+    { key: 'night_spider_queen', name: 'Rainha das Aranhas Noturnas', rank: 'S', type: 'Chefe', isBoss: true, hp: 1500, attack: 120, defense: 45, weakness: 'Fogo', resistance: 'Veneno', specialMechanic: 'Invoca enxames a cada fase. 2 fases.', recommendedPower: 1400, drops: 'Caixa Especial, arma Rank S', icon: '🕸️' },
+    { key: 'crimson_monarch', name: 'Monarca da Ruína Carmesim', rank: 'S', type: 'Chefe Supremo', isBoss: true, hp: 1900, attack: 150, defense: 60, weakness: '—', resistance: 'Sombrio/Fogo', specialMechanic: 'Aura carmesim queima a cada turno. 3 fases.', recommendedPower: 1700, drops: 'Caixa Especial, núcleo de ascensão, arma Rank S', icon: '👁️' },
+  ]
+  for (const e of enemies) {
+    await prisma.enemy.upsert({ where: { key: e.key }, update: e, create: e })
+  }
+  console.log(`✅ ${enemies.length} inimigos do bestiário criados`)
 
   console.log('🎮 Seed concluído com sucesso!')
 }

@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/hooks/useAuth'
@@ -44,11 +45,11 @@ export default function LoginPage() {
       <div className="glass neon-border rounded-2xl p-8">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 neon-glow">
-            <Zap size={26} className="text-white" />
+          <div className="flex justify-center mb-3">
+            <Image src="/logo.png" alt="Ascend System" width={80} height={80} className="rounded-2xl neon-glow" priority />
           </div>
-          <h1 className="text-2xl font-bold text-white">ASCEND SYSTEM</h1>
-          <p className="text-slate-400 text-sm mt-1">Entre na sua jornada de evolução</p>
+          <h1 className="text-2xl font-bold text-white tracking-wide">ASCEND SYSTEM</h1>
+          <p className="text-slate-400 text-sm mt-1">Desperte. Cumpra as missões. Torne-se mais forte.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

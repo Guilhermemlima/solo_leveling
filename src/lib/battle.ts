@@ -71,11 +71,8 @@ function rng(min: number, max: number) {
   return min + Math.random() * (max - min)
 }
 
-/** Simula a batalha por turnos e retorna o log completo. */
-export function simulateBattle(player: Combatant, opponent: Combatant): BattleResult {
-  const ps = deriveStats(player)
-  const os = deriveStats(opponent)
-
+/** Simula a batalha por turnos a partir de stats de combate brutos (reusável por PvE). */
+export function simulateStats(ps: CombatStats, os: CombatStats): BattleResult {
   let playerHp = ps.hp
   let opponentHp = os.hp
   const rounds: Round[] = []
@@ -117,6 +114,11 @@ export function simulateBattle(player: Combatant, opponent: Combatant): BattleRe
   else playerWon = playerHp / ps.hp >= opponentHp / os.hp
 
   return { playerWon, rounds, playerStats: ps, opponentStats: os }
+}
+
+/** Simula a batalha por turnos entre dois combatentes (Arena). */
+export function simulateBattle(player: Combatant, opponent: Combatant): BattleResult {
+  return simulateStats(deriveStats(player), deriveStats(opponent))
 }
 
 export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD'

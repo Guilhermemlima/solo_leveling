@@ -56,6 +56,10 @@ export async function syncUserDaily(userId: string) {
       where: { userId, recurrence: 'MONTHLY', status: 'COMPLETED', completedAt: { lt: monthStart } },
       data: { status: 'PENDING', completedAt: null },
     }),
+    prisma.taskSubtask.updateMany({
+      where: { task: { userId, status: 'PENDING' } },
+      data: { completed: false },
+    }),
   )
 
   // 2) Reiniciar missões diárias/semanais cujo período passou (resgatadas ou não)

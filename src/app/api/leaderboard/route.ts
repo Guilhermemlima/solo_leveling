@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { getRank, nextRank, rankProgress } from '@/lib/ranks'
+import { currentSeason, SEASON_REWARDS } from '@/lib/seasons'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -17,6 +18,7 @@ export async function GET() {
       arenaPoints: true,
       arenaWins: true,
       arenaLosses: true,
+      seasonPoints: true,
       selectedClass: { select: { name: true, icon: true, color: true } },
     },
   })
@@ -55,5 +57,18 @@ export async function GET() {
           progress: rankProgress(mePoints),
         }
       : null,
+    season: currentSeason(),
+    seasonRewards: SEASON_REWARDS,
+    seasonLeaderboard: [...users]
+      .sort((a, b) => b.seasonPoints - a.seasonPoints)
+      .slice(0, 20)
+      .map((entry, index) => ({
+        position: index + 1,
+        id: entry.id,
+        name: entry.name,
+        level: entry.level,
+        points: entry.seasonPoints,
+        isMe: entry.id === auth.userId,
+      })),
   })
 }

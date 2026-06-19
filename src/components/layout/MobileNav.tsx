@@ -1,11 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CheckSquare, Swords, Target, User } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Swords, Gift, Target, User } from 'lucide-react'
 
 const mobileItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Início' },
   { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
+  { href: '/chests', icon: Gift, label: 'Caixas' },
   { href: '/arena', icon: Swords, label: 'Arena' },
   { href: '/missions', icon: Target, label: 'Missões' },
   { href: '/profile', icon: User, label: 'Perfil' },
@@ -24,7 +25,7 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all duration-200 ${
                 active ? 'text-indigo-400' : 'text-slate-500'
               }`}
             >

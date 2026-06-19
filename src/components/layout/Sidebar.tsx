@@ -1,24 +1,33 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CheckSquare, Target, User, Package, ShoppingBag,
-  Trophy, Clock, BarChart3, Settings, LogOut, Zap, ChevronRight, Swords, Medal
+  Trophy, Clock, BarChart3, Settings, LogOut, Zap, ChevronRight, Swords, Medal,
+  Layers3, BrainCircuit, Users, MessageCircle, Gift, Skull, Hammer
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
+  { href: '/routines', icon: Layers3, label: 'Rotinas' },
   { href: '/missions', icon: Target, label: 'Missões' },
   { href: '/arena', icon: Swords, label: 'Arena' },
+  { href: '/bestiary', icon: Skull, label: 'Bestiário' },
   { href: '/leaderboard', icon: Medal, label: 'Ranking' },
+  { href: '/progression', icon: BrainCircuit, label: 'Progressão' },
+  { href: '/community', icon: Users, label: 'Comunidade' },
   { href: '/profile', icon: User, label: 'Perfil' },
+  { href: '/chests', icon: Gift, label: 'Caixas' },
   { href: '/inventory', icon: Package, label: 'Inventário' },
+  { href: '/forge', icon: Hammer, label: 'Forja' },
   { href: '/shop', icon: ShoppingBag, label: 'Loja' },
   { href: '/achievements', icon: Trophy, label: 'Conquistas' },
   { href: '/history', icon: Clock, label: 'Histórico' },
   { href: '/reports', icon: BarChart3, label: 'Relatórios' },
+  { href: '/support', icon: MessageCircle, label: 'Suporte' },
   { href: '/settings', icon: Settings, label: 'Configurações' },
 ]
 
@@ -29,14 +38,12 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0a0a16] border-r border-indigo-500/10 fixed left-0 top-0 bottom-0 z-30">
       {/* Logo */}
-      <div className="p-6 border-b border-indigo-500/10">
+      <div className="p-4 border-b border-indigo-500/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Zap size={18} className="text-white" />
-          </div>
+          <Image src="/logo.png" alt="Ascend System" width={40} height={40} className="rounded-lg" priority />
           <div>
-            <h1 className="font-bold text-white text-sm">ASCEND</h1>
-            <p className="text-xs text-indigo-400">SYSTEM</p>
+            <h1 className="font-bold text-white text-sm tracking-wide">ASCEND</h1>
+            <p className="text-xs text-purple-400 tracking-[0.2em]">SYSTEM</p>
           </div>
         </div>
       </div>
