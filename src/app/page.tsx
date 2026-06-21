@@ -28,18 +28,18 @@ const FEATURES = [
 
 const PLANS = [
   {
-    nome: "Mensal", plano: "mensal" as const, preco: "R$ 19,90", periodo: "/mês",
+    nome: "Mensal", plano: "mensal" as const, preco: "R$ 9,90", precoOriginal: "R$ 19,90", periodo: "/mês",
     desc: "Acesso completo por 30 dias.", destaque: false, variant: "secondary" as const,
     recursos: ["Missões diárias ilimitadas", "Sistema de EXP e ranks", "Inventário completo", "Conquistas e recompensas"],
   },
   {
-    nome: "Anual", plano: "anual" as const, preco: "R$ 97,90", periodo: "/ano",
-    desc: "Melhor custo-benefício. Economize 59%.", destaque: true, variant: "primary" as const,
-    equiv: "ou R$8,16/mês",
+    nome: "Anual", plano: "anual" as const, preco: "R$ 47,90", precoOriginal: "R$ 97,90", periodo: "/ano",
+    desc: "Melhor custo-benefício. Economize 75%.", destaque: true, variant: "primary" as const,
+    equiv: "ou R$3,99/mês",
     recursos: ["Tudo do plano mensal", "Equipamentos exclusivos mensais", "Rank de Fundador no perfil", "Prioridade em novos recursos", "Caixas bônus todo mês"],
   },
   {
-    nome: "Fundador", plano: "vitalicio" as const, preco: "R$ 197,90", periodo: "único",
+    nome: "Fundador", plano: "vitalicio" as const, preco: "R$ 97,90", precoOriginal: "R$ 197,90", periodo: "único",
     desc: "Acesso vitalício. Sem mensalidades jamais.", destaque: false, variant: "gold" as const,
     urgencia: "Apenas 47 vagas",
     recursos: ["Tudo do plano anual", "Acesso vitalício garantido", "Badge exclusivo de Fundador", "Itens lendários iniciais", "Suporte prioritário (24h)", "Acesso antecipado a features"],
@@ -728,9 +728,15 @@ export default function LandingPage() {
 
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-white mb-1">{plan.nome}</h3>
+                  {"precoOriginal" in plan && plan.precoOriginal && (
+                    <p className="text-slate-500 text-sm line-through mb-0.5">{plan.precoOriginal}</p>
+                  )}
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-4xl font-black text-white">{plan.preco}</span>
                     <span className="text-slate-400 text-sm">{plan.periodo}</span>
+                    {"precoOriginal" in plan && plan.precoOriginal && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded">-50%</span>
+                    )}
                   </div>
                   {"equiv" in plan && plan.equiv && (
                     <p className="text-cyan-400 text-xs font-mono mb-1">{plan.equiv}</p>
