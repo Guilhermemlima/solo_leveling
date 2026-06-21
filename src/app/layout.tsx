@@ -7,8 +7,21 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Ascend System — Desperte seu poder',
-  description: 'RPG de evolução pessoal dark fantasy. Cumpra missões reais, ganhe EXP, evolua atributos, suba de rank e enfrente as sombras.',
+  description: 'Transforme sua rotina em missões épicas com EXP, ranks e recompensas. RPG de evolução pessoal dark fantasy. Garantia de 7 dias.',
   icons: { icon: '/logo.png', apple: '/logo.png' },
+  openGraph: {
+    title: 'Ascend System — Desperte seu poder',
+    description: 'Transforme sua rotina em missões épicas com EXP, ranks e recompensas. Garantia de 7 dias.',
+    url: 'https://ascend-system-two.vercel.app',
+    siteName: 'Ascend System',
+    locale: 'pt_BR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ascend System — Desperte seu poder',
+    description: 'Transforme sua rotina em missões épicas com EXP, ranks e recompensas.',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

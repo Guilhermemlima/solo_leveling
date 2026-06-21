@@ -29,7 +29,7 @@ export default function RegisterPage() {
       const data = await res.json()
       if (!res.ok) { toast(data.error, 'error'); return }
       setUser(data.user)
-      toast('Bem-vindo ao Chi Navy System!', 'success')
+      toast('Bem-vindo ao Ascend System!', 'success')
       router.push('/dashboard')
     } catch {
       toast('Erro ao criar conta.', 'error')
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Nome" placeholder="Seu nome" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} icon={<User size={16} />} required />
           <Input label="Email" type="email" placeholder="seu@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} icon={<Mail size={16} />} required />
-          <Input label="Senha" type="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} icon={<Lock size={16} />} required />
+          <Input label="Senha" type="password" placeholder="Mínimo 8 caracteres com 1 número" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} icon={<Lock size={16} />} required />
           <Input label="Confirmar Senha" type="password" placeholder="Repita sua senha" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })} icon={<Lock size={16} />} required />
 
           <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full mt-2">

@@ -163,3 +163,144 @@ html, body {
     linear-gradient(90deg, rgba(168, 85, 247, 0.035) 1px, transparent 1px);
   background-size: 50px 50px;
 }
+
+/* ── FUTURISTIC LAYER ─────────────────────────────────────── */
+
+/* Scanline overlay on ResourceBar */
+.scanline-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* Holographic card shimmer */
+.holo-card {
+  position: relative;
+  overflow: hidden;
+}
+.holo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(168,85,247,0.06) 50%,
+    rgba(34,211,238,0.04) 55%,
+    transparent 65%
+  );
+  background-size: 200% 200%;
+  animation: holo-sweep 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes holo-sweep {
+  0%   { background-position: 200% 50%; }
+  50%  { background-position: -100% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Neon text flicker */
+@keyframes neon-flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+  20%,24%,55% { opacity: 0.6; }
+}
+.neon-flicker { animation: neon-flicker 5s linear infinite; }
+
+/* Corner brackets for glass cards */
+.bracket-card {
+  position: relative;
+}
+.bracket-card::before,
+.bracket-card::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: rgba(168,85,247,0.5);
+  border-style: solid;
+}
+.bracket-card::before {
+  top: 6px; left: 6px;
+  border-width: 1px 0 0 1px;
+}
+.bracket-card::after {
+  bottom: 6px; right: 6px;
+  border-width: 0 1px 1px 0;
+}
+
+/* Pulsing dot indicator */
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 0.8; }
+  70% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.ping-slow { animation: ping-slow 2.4s cubic-bezier(0,0,0.2,1) infinite; }
+
+/* Glitch text effect */
+@keyframes glitch-1 {
+  0%,100% { clip-path: inset(0 0 96% 0); transform: translateX(0); }
+  20%      { clip-path: inset(30% 0 50% 0); transform: translateX(-3px); }
+  40%      { clip-path: inset(70% 0 10% 0); transform: translateX(3px); }
+  60%      { clip-path: inset(10% 0 80% 0); transform: translateX(-2px); }
+  80%      { clip-path: inset(50% 0 30% 0); transform: translateX(2px); }
+}
+.glitch {
+  position: relative;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.glitch::before {
+  color: #22d3ee;
+  animation: glitch-1 4s steps(1) infinite;
+  opacity: 0.5;
+}
+.glitch::after {
+  color: #ec4899;
+  animation: glitch-1 4s steps(1) infinite reverse;
+  opacity: 0.5;
+}
+
+/* Cyber divider line */
+.cyber-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,85,247,0.6), rgba(34,211,238,0.4), transparent);
+  position: relative;
+}
+.cyber-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #a855f7;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #a855f7, 0 0 16px #a855f7;
+}
+
+/* Number stat glow */
+.stat-glow {
+  text-shadow: 0 0 12px currentColor;
+}
+
+/* Resource chip hover glow ring */
+.resource-chip:hover {
+  box-shadow: 0 0 0 1px rgba(168,85,247,0.3), 0 0 12px rgba(168,85,247,0.15);
+}
+
+/* Scroll fade-in utility (used by PageTransition targets) */
+[data-gsap] {
+  will-change: transform, opacity;
+}

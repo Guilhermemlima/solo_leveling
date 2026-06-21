@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { calculateLevelUp } from '@/lib/game-logic'
@@ -74,27 +75,46 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { level, currentXp, levelUps } = calculateLevelUp(user.level, user.currentXp, xpGain)
 
-  const writes: any[] = [
-    prisma.userChest.update({ where: { id }, data: { quantity: { decrement: 1 } } }),
-    prisma.user.update({
+  await prisma.$transaction(async tx => {
+    await tx.userChest.update({ where: { id }, data: { quantity: { decrement: 1 } } })
+    await tx.user.update({
       where: { id: auth.userId },
       data: { essences: { increment: essencesGain }, totalXp: { increment: xpGain }, level, currentXp },
-    }),
-    prisma.chestOpeningLog.create({ data: { userId: auth.userId, chestId: userChest.chestId, rewardsJson: resolved } }),
-    prisma.activityHistory.create({
+    })
+    await tx.chestOpeningLog.create({ data: { userId: auth.userId, chestId: userChest.chestId, rewardsJson: resolved } })
+    await tx.activityHistory.create({
       data: { userId: auth.userId, type: 'CHEST_OPEN', description: `Abriu ${userChest.chest.name}`, xpChange: xpGain, essenceChange: essencesGain },
-    }),
-  ]
-  if (Object.keys(attrIncrements).length > 0) {
-    const data: Record<string, { increment: number }> = {}
-    for (const [k, v] of Object.entries(attrIncrements)) data[k] = { increment: v }
-    writes.push(prisma.attribute.update({ where: { userId: auth.userId }, data }))
-  }
-  if (newItemId) {
-    writes.push(prisma.inventory.create({ data: { userId: auth.userId, equipmentId: newItemId } }))
-  }
+    })
 
-  await prisma.$transaction(writes)
+    if (Object.keys(attrIncrements).length > 0) {
+      const attrData: Record<string, { increment: number }> = {}
+      const attrCreate: Record<string, number> = {}
+      for (const [k, v] of Object.entries(attrIncrements)) {
+        attrData[k] = { increment: v }
+        attrCreate[k] = v
+      }
+      await tx.attribute.upsert({
+        where: { userId: auth.userId },
+        update: attrData,
+        create: { userId: auth.userId, ...attrCreate },
+      })
+    }
+
+    if (newItemId) {
+      try {
+        await tx.inventory.create({ data: { userId: auth.userId, equipmentId: newItemId } })
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          // Item already in inventory (race condition) — convert to essences
+          const bonus = 50
+          await tx.user.update({ where: { id: auth.userId }, data: { essences: { increment: bonus } } })
+          resolved.push({ type: 'ESSENCES', amount: bonus, label: `${bonus} Essências (item já obtido)`, icon: '💎' })
+        } else {
+          throw e
+        }
+      }
+    }
+  })
 
   return NextResponse.json({
     chest: { rank, name: userChest.chest.name, icon: userChest.chest.icon },

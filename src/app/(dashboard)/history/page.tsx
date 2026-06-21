@@ -25,6 +25,9 @@ export default function HistoryPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Clock className="text-slate-400" /> Histórico de Evolução</h1>
         <p className="text-slate-400 text-sm">Sua linha do tempo de atividades</p>
+        {history.length >= 100 && !loading && (
+          <p className="text-xs text-slate-600 mt-1">Mostrando os últimos 100 eventos</p>
+        )}
       </div>
 
       {loading ? (

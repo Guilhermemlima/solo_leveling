@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
-import { battleRewards, deriveStats, makeBot, BOT_DIFFICULTIES, type Attributes, type Combatant } from '@/lib/battle'
+import { battleRewards, deriveStats, makeBot, BOT_DIFFICULTIES, computeEquipBonuses, type Attributes, type Combatant } from '@/lib/battle'
 import { currentSeason } from '@/lib/seasons'
+import { computeCharges } from '@/lib/arena'
 
 function riskLabel(playerPower: number, opponentPower: number) {
   const ratio = opponentPower / Math.max(1, playerPower)
@@ -19,18 +20,22 @@ export async function GET() {
     include: { attributes: true, inventory: { where: { isEquipped: true }, include: { equipment: true } } },
   })
   if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
-  const equipBonus = user.inventory.reduce((sum, item) => sum + (item.equipment.bonusValue || 0) * (1 + item.upgradeLevel * 0.05), 0)
   const player: Combatant = {
     name: user.name, icon: user.avatarUrl ? '🧑' : user.name.charAt(0).toUpperCase(),
-    level: user.level, attributes: (user.attributes || {}) as Attributes, equipBonus,
+    level: user.level, attributes: (user.attributes || {}) as Attributes,
+    equipBonuses: computeEquipBonuses(user.inventory.map(i => ({
+      bonusType: i.equipment.bonusType,
+      bonusValue: i.equipment.bonusValue || 0,
+      upgradeLevel: i.upgradeLevel,
+    }))),
   }
   const playerStats = deriveStats(player)
-  const bots = BOT_DIFFICULTIES.map(({ key, label }) => {
+  const bots = BOT_DIFFICULTIES.map(({ key, label, rankLabel }) => {
     const bot = makeBot(user.level, key)
     const stats = deriveStats(bot)
     return {
-      id: `bot:${key}`, type: 'BOT', difficulty: key, difficultyLabel: label,
-      name: bot.name, icon: bot.icon, level: bot.level, power: stats.power,
+      id: `bot:${key}`, type: 'BOT', difficulty: key, difficultyLabel: label, rankLabel,
+      name: bot.name, icon: bot.icon, imageUrl: bot.imageUrl, level: bot.level, power: stats.power,
       risk: riskLabel(playerStats.power, stats.power),
       rewards: battleRewards({ playerLevel: user.level, won: true, type: 'BOT', difficulty: key }),
     }
@@ -44,7 +49,11 @@ export async function GET() {
     const power = deriveStats({
       name: opponent.name, icon: '🧑', level: opponent.level,
       attributes: (opponent.attributes || {}) as Attributes,
-      equipBonus: opponent.inventory.reduce((sum, item) => sum + (item.equipment.bonusValue || 0) * (1 + item.upgradeLevel * 0.05), 0),
+      equipBonuses: computeEquipBonuses(opponent.inventory.map(i => ({
+        bonusType: i.equipment.bonusType,
+        bonusValue: i.equipment.bonusValue || 0,
+        upgradeLevel: i.upgradeLevel,
+      }))),
     }).power
     return {
       id: `player:${opponent.id}`, type: 'PLAYER', name: opponent.name,
@@ -54,17 +63,18 @@ export async function GET() {
       rewards: battleRewards({ playerLevel: user.level, won: true, type: 'PLAYER' }),
     }
   })
-  const [recentBattles, todayBattles] = await Promise.all([
-    prisma.battle.findMany({ where: { userId: auth.userId }, orderBy: { createdAt: 'desc' }, take: 8 }),
-    prisma.battle.count({ where: { userId: auth.userId, createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
-  ])
+  const { charges, nextChargeAt: computedNextAt } = computeCharges(user.arenaCharges, user.arenaNextChargeAt)
+  const recentBattles = await prisma.battle.findMany({ where: { userId: auth.userId }, orderBy: { createdAt: 'desc' }, take: 8 })
+
   return NextResponse.json({
     player: {
       name: user.name, level: user.level, stats: playerStats, wins: user.arenaWins,
       losses: user.arenaLosses, points: user.arenaPoints, seasonPoints: user.seasonPoints,
+      lastBattleAt: user.lastBattleAt,
     },
     season: currentSeason(),
-    battlesRemaining: Math.max(0, 20 - todayBattles),
+    charges,
+    nextChargeAt: computedNextAt,
     bots, players, recentBattles,
   })
 }

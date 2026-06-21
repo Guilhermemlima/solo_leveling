@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle, Layers3, Plus, Trash2, X } from 'lucide-react'
+import { CheckCircle, ClipboardEdit, Layers3, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { CompletionModal } from '@/components/game/CompletionModal'
@@ -22,25 +22,37 @@ function TasksContent() {
   const [form, setForm] = useState(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [quickCompletingId, setQuickCompletingId] = useState<string | null>(null)
   const [completing, setCompleting] = useState(false)
   const [reward, setReward] = useState<any>(null)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const { toast } = useToast()
   const { refreshUser } = useAuth()
   const searchParams = useSearchParams()
 
   useEffect(() => { if (searchParams.get('new') === '1') setShowForm(true) }, [searchParams])
-  const load = async () => {
+  const load = async (p = page) => {
     const params = new URLSearchParams()
     if (filterStatus) params.set('status', filterStatus)
     if (filterCategory) params.set('category', filterCategory)
+    params.set('page', String(p))
+    params.set('limit', '20')
     const response = await fetch(`/api/tasks?${params}`)
-    if (response.ok) setTasks(await response.json())
+    if (response.ok) {
+      const data = await response.json()
+      setTasks(data.tasks)
+      setTotal(data.total)
+      setTotalPages(data.totalPages)
+    }
     setLoading(false)
   }
-  useEffect(() => { load() }, [filterStatus, filterCategory])
+  useEffect(() => { setPage(1); load(1) }, [filterStatus, filterCategory]) // eslint-disable-line
+  useEffect(() => { load(page) }, [page]) // eslint-disable-line
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault(); setSubmitting(true)
@@ -58,18 +70,30 @@ function TasksContent() {
     setSubmitting(false)
   }
 
-  const complete = async (metrics: Record<string, unknown>) => {
-    setCompleting(true)
+  const completeTask = async (taskId: string, metrics: Record<string, unknown>) => {
     const key = crypto.randomUUID()
-    const response = await fetch(`/api/tasks/${selectedTask.id}/complete`, {
+    const response = await fetch(`/api/tasks/${taskId}/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
       body: JSON.stringify(metrics),
     })
     const data = await response.json()
-    if (response.ok) { setReward(data); setSelectedTask(null); await Promise.all([load(), refreshUser()]) }
+    if (response.ok) { setReward(data); await Promise.all([load(), refreshUser()]) }
     else toast(data.error, 'error')
+    return response.ok
+  }
+
+  const complete = async (metrics: Record<string, unknown>) => {
+    setCompleting(true)
+    await completeTask(selectedTask.id, metrics)
+    setSelectedTask(null)
     setCompleting(false)
+  }
+
+  const quickComplete = async (task: any) => {
+    setQuickCompletingId(task.id)
+    await completeTask(task.id, {})
+    setQuickCompletingId(null)
   }
 
   const remove = async (id: string) => {
@@ -113,19 +137,90 @@ function TasksContent() {
       </div>
 
       {loading ? <div className="py-12 text-center text-slate-500">Carregando...</div> : <div className="space-y-3">
-        {tasks.map(task => <article key={task.id} className={`glass rounded-2xl p-4 border ${task.status === 'COMPLETED' ? 'border-emerald-500/20 opacity-70' : 'border-slate-700/50'}`}>
-          <div className="flex gap-3">
-            <button onClick={() => task.status === 'PENDING' && setSelectedTask(task)} disabled={task.status !== 'PENDING'} className="w-7 h-7 rounded-lg border border-slate-600 flex items-center justify-center hover:border-indigo-500">{task.status === 'COMPLETED' && <CheckCircle size={15} className="text-emerald-400" />}</button>
-            <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span>{CATEGORY_ICONS[task.category as keyof typeof CATEGORY_ICONS]}</span><h2 className="text-sm font-medium text-slate-200">{task.title}</h2></div>
-              {task.description && <p className="text-xs text-slate-500 mt-1">{task.description}</p>}
-              {task.subtasks?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{task.subtasks.map((subtask: any) => <span key={subtask.id} className="text-[11px] px-2 py-1 rounded bg-slate-900/70 text-slate-500">✓ {subtask.title}</span>)}</div>}
-              <div className="flex flex-wrap gap-2 mt-3 text-xs"><span style={{ color: DIFFICULTY_COLORS[task.difficulty as keyof typeof DIFFICULTY_COLORS] }}>{DIFFICULTY_LABELS[task.difficulty as keyof typeof DIFFICULTY_LABELS]}</span><span className="text-indigo-400">+{task.xpReward} XP</span><span className="text-amber-400">+{task.essenceReward} 💎</span>
-                {task.estimatedMinutes && <span className="text-slate-500">⏱ {task.estimatedMinutes} min</span>}{task.targetValue && <span className="text-cyan-400">Meta {task.targetValue} {task.targetUnit}</span>}{task.templateName && <span className="text-purple-400">{task.templateName}</span>}</div>
-            </div>
-            <button onClick={() => remove(task.id)} className="text-slate-600 hover:text-red-400"><Trash2 size={14} /></button>
-          </div>
-        </article>)}
+        {tasks.map(task => {
+          const isPending = task.status === 'PENDING'
+          const isQuickCompleting = quickCompletingId === task.id
+          return (
+            <article key={task.id} className={`glass rounded-2xl p-4 border transition-all ${task.status === 'COMPLETED' ? 'border-emerald-500/20 opacity-60' : 'border-slate-700/50'}`}>
+              <div className="flex gap-3">
+                {/* Status icon */}
+                <div className="w-7 h-7 rounded-lg border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                  {task.status === 'COMPLETED'
+                    ? <CheckCircle size={15} className="text-emerald-400" />
+                    : <span className="text-xs" style={{ color: DIFFICULTY_COLORS[task.difficulty as keyof typeof DIFFICULTY_COLORS] }}>●</span>}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span>{CATEGORY_ICONS[task.category as keyof typeof CATEGORY_ICONS]}</span>
+                    <h2 className="text-sm font-medium text-slate-200">{task.title}</h2>
+                  </div>
+                  {task.description && <p className="text-xs text-slate-500 mt-1">{task.description}</p>}
+                  {task.subtasks?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {task.subtasks.map((subtask: any) => <span key={subtask.id} className="text-[11px] px-2 py-1 rounded bg-slate-900/70 text-slate-500">✓ {subtask.title}</span>)}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                    <span style={{ color: DIFFICULTY_COLORS[task.difficulty as keyof typeof DIFFICULTY_COLORS] }}>{DIFFICULTY_LABELS[task.difficulty as keyof typeof DIFFICULTY_LABELS]}</span>
+                    <span className="text-indigo-400">+{task.xpReward} XP</span>
+                    <span className="text-amber-400">+{task.essenceReward} 🪙</span>
+                    {task.estimatedMinutes && <span className="text-slate-500">⏱ {task.estimatedMinutes} min</span>}
+                    {task.targetValue && <span className="text-cyan-400">Meta {task.targetValue} {task.targetUnit}</span>}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isPending && (
+                    <>
+                      {/* Detalhes */}
+                      <button
+                        onClick={() => setSelectedTask(task)}
+                        title="Adicionar detalhes"
+                        className="w-8 h-8 rounded-lg border border-slate-700 bg-slate-800/60 flex items-center justify-center text-slate-400 hover:border-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        <ClipboardEdit size={14} />
+                      </button>
+                      {/* Conclusão rápida */}
+                      <button
+                        onClick={() => quickComplete(task)}
+                        disabled={isQuickCompleting}
+                        title="Concluir agora"
+                        className="w-8 h-8 rounded-lg border border-emerald-600/60 bg-emerald-500/15 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/30 hover:border-emerald-400 transition-colors disabled:opacity-50"
+                      >
+                        {isQuickCompleting
+                          ? <span className="w-3 h-3 border border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                          : <CheckCircle size={15} />}
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => remove(task.id)} title="Excluir" className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:text-red-400 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </article>
+          )
+        })}
         {!tasks.length && <div className="glass rounded-2xl p-10 text-center text-slate-500">Nenhuma tarefa encontrada.</div>}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-xs text-slate-500">{total} tarefas no total</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                ← Anterior
+              </button>
+              <span className="text-xs text-slate-500">{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                Próxima →
+              </button>
+            </div>
+          </div>
+        )}
       </div>}
     </div>
   </>

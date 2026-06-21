@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { calculateLevelUp } from '@/lib/game-logic'
-import { deriveStats, simulateStats, type Attributes, type Combatant } from '@/lib/battle'
+import { deriveStats, simulateStats, computeEquipBonuses, type Attributes, type Combatant } from '@/lib/battle'
 import { enemyToStats, readiness, pveRewards, pveChestDrop } from '@/lib/pve'
 import { grantChest, CHESTS, type ChestRank } from '@/lib/chests'
+import { clientKey, rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser()
   if (!auth) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const limiter = rateLimit(clientKey(req, 'pve-battle', auth.userId), 15, 60_000)
+  if (!limiter.allowed) return NextResponse.json({ error: 'Aguarde antes de iniciar outra batalha PvE' }, { status: 429 })
 
   const { enemyId } = await req.json().catch(() => ({}))
   if (!enemyId) return NextResponse.json({ error: 'Inimigo inválido' }, { status: 400 })
@@ -23,10 +27,14 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
   if (!enemy) return NextResponse.json({ error: 'Inimigo não encontrado' }, { status: 404 })
 
-  const equipBonus = user.inventory.reduce((s, i) => s + (i.equipment.bonusValue || 0) * (1 + i.upgradeLevel * 0.05), 0)
   const player: Combatant = {
     name: user.name, icon: '🧑', level: user.level,
-    attributes: (user.attributes || {}) as Attributes, equipBonus,
+    attributes: (user.attributes || {}) as Attributes,
+    equipBonuses: computeEquipBonuses(user.inventory.map(i => ({
+      bonusType: i.equipment.bonusType,
+      bonusValue: i.equipment.bonusValue || 0,
+      upgradeLevel: i.upgradeLevel,
+    }))),
   }
   const playerStats = deriveStats(player)
 

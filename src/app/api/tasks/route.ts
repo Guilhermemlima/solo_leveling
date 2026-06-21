@@ -14,22 +14,46 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status')
   const category = searchParams.get('category')
   const templatesOnly = searchParams.get('templates') === '1'
+  const pageParam = searchParams.get('page')
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+  const page = Math.max(1, parseInt(pageParam || '1'))
+  const skip = (page - 1) * limit
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      userId: auth.userId,
-      ...(status ? { status: status as never } : {}),
-      ...(category ? { category: category as never } : {}),
-      ...(templatesOnly ? { isTemplate: true } : {}),
-    },
-    include: {
-      subtasks: { orderBy: { position: 'asc' } },
-      executions: { orderBy: { completedAt: 'desc' }, take: 1 },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+  const where = {
+    userId: auth.userId,
+    ...(status ? { status: status as never } : {}),
+    ...(category ? { category: category as never } : {}),
+    ...(templatesOnly ? { isTemplate: true } : {}),
+  }
 
-  return NextResponse.json(tasks)
+  // Se não houver paginação explícita, retorna tudo (compatibilidade com outros usos)
+  if (!pageParam) {
+    const tasks = await prisma.task.findMany({
+      where,
+      include: {
+        subtasks: { orderBy: { position: 'asc' } },
+        executions: { orderBy: { completedAt: 'desc' }, take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return NextResponse.json(tasks)
+  }
+
+  const [tasks, total] = await Promise.all([
+    prisma.task.findMany({
+      where,
+      include: {
+        subtasks: { orderBy: { position: 'asc' } },
+        executions: { orderBy: { completedAt: 'desc' }, take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.task.count({ where }),
+  ])
+
+  return NextResponse.json({ tasks, total, page, totalPages: Math.ceil(total / limit), hasMore: page * limit < total })
 }
 
 export async function POST(req: NextRequest) {

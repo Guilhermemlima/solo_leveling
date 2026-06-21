@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target } from 'lucide-react'
+import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target, Heart, Shield, Swords, FlaskConical } from 'lucide-react'
 import { XPBar } from '@/components/game/XPBar'
 import { RewardModal } from '@/components/game/RewardModal'
 import { RankBadge } from '@/components/game/RankBadge'
@@ -16,6 +16,7 @@ interface DashboardData {
   activeMissions: any[]
   recentActivity: any[]
   weeklyCompleted: number
+  combatStats: { hp: number; atk: number; def: number; crit: number; power: number } | null
 }
 
 export default function DashboardPage() {
@@ -23,22 +24,36 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [reward, setReward] = useState<any>(null)
   const [completing, setCompleting] = useState<string | null>(null)
+  const [advisor, setAdvisor] = useState<any>(null)
   const { refreshUser } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
   const fetchDashboard = async () => {
-    const res = await fetch('/api/dashboard')
+    const res = await fetch('/api/dashboard', { cache: 'no-store' })
     if (res.ok) setData(await res.json())
     setLoading(false)
   }
 
-  useEffect(() => { fetchDashboard() }, [])
+  // Fetch on mount and every time the tab becomes visible again
+  // (covers both first load and returning from inventory/forge)
+  useEffect(() => {
+    fetchDashboard()
+    fetch('/api/ai/recommendations').then(r => r.ok ? r.json() : null).then(d => d && setAdvisor(d))
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchDashboard() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, []) // eslint-disable-line
 
   const completeTask = async (taskId: string) => {
     setCompleting(taskId)
     try {
-      const res = await fetch(`/api/tasks/${taskId}/complete`, { method: 'POST' })
+      const key = crypto.randomUUID()
+      const res = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify({}),
+      })
       const result = await res.json()
       if (!res.ok) { toast(result.error, 'error'); return }
       setReward(result)
@@ -66,7 +81,7 @@ export default function DashboardPage() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div data-gsap className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white">
@@ -74,9 +89,16 @@ export default function DashboardPage() {
               </h1>
               {u && <RankBadge points={u.arenaPoints || 0} size="sm" />}
             </div>
-            <p className="text-slate-400 text-sm mt-0.5">
-              {u?.selectedClass ? `${u.selectedClass.icon} ${u.selectedClass.name}` : 'Escolha sua classe no perfil'}
-            </p>
+            {u?.selectedClass ? (
+              <p className="text-slate-400 text-sm mt-0.5">{u.selectedClass.icon} {u.selectedClass.name}</p>
+            ) : (
+              <button
+                onClick={() => router.push('/settings')}
+                className="mt-1 px-3 py-1 bg-indigo-500/15 border border-indigo-500/30 rounded-lg text-xs text-indigo-300 hover:bg-indigo-500/25 transition-all flex items-center gap-1.5 w-fit"
+              >
+                ⚔️ Escolha sua classe para ganhar bônus de XP
+              </button>
+            )}
           </div>
           <Button onClick={() => router.push('/tasks?new=1')} variant="primary">
             <Plus size={16} /> Nova Tarefa
@@ -84,15 +106,45 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-gsap className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={<Zap size={20} className="text-indigo-400" />} label="Nível" value={u?.level} color="indigo" />
           <StatCard icon={<Flame size={20} className="text-orange-400" />} label="Streak" value={`${u?.currentStreak} dias`} color="orange" />
-          <StatCard icon={<Coins size={20} className="text-amber-400" />} label="Essências" value={u?.essences?.toLocaleString()} color="amber" />
-          <StatCard icon={<TrendingUp size={20} className="text-emerald-400" />} label="XP Total" value={u?.totalXp?.toLocaleString()} color="emerald" />
+          <StatCard icon={<img src="/assets/items/moeda.png" alt="Moedas" className="w-5 h-5 object-contain" />} label="Moedas" value={u?.essences?.toLocaleString()} color="amber" />
+          <StatCard icon={<FlaskConical size={20} className="text-violet-400" />} label="Fragmentos" value={u?.fragments?.toLocaleString() ?? '0'} color="violet" />
         </div>
 
+        {/* Combat Stats Row */}
+        {data?.combatStats && (
+          <div data-gsap className="grid grid-cols-3 gap-3">
+            <CombatStatCard
+              icon={<Heart size={18} className="text-red-400" />}
+              label="HP"
+              value={data.combatStats.hp}
+              color="red"
+              bg="bg-red-500/5"
+              border="border-red-500/20"
+            />
+            <CombatStatCard
+              icon={<Swords size={18} className="text-orange-400" />}
+              label="ATK"
+              value={data.combatStats.atk}
+              color="orange"
+              bg="bg-orange-500/5"
+              border="border-orange-500/20"
+            />
+            <CombatStatCard
+              icon={<Shield size={18} className="text-blue-400" />}
+              label="DEF"
+              value={data.combatStats.def}
+              color="blue"
+              bg="bg-blue-500/5"
+              border="border-blue-500/20"
+            />
+          </div>
+        )}
+
         {/* XP Bar */}
-        <div className="glass neon-border rounded-2xl p-5">
+        <div data-gsap className="glass neon-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-slate-300">Progresso para o Nível {(u?.level || 0) + 1}</span>
             <span className="text-xs text-indigo-400">{data?.weeklyCompleted || 0} tarefas esta semana</span>
@@ -101,7 +153,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Today Tasks + Active Missions */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div data-gsap className="grid lg:grid-cols-2 gap-6">
           {/* Tasks */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -177,8 +229,8 @@ export default function DashboardPage() {
                     <div key={um.id} className="glass rounded-xl p-4 border border-slate-700/40 hover:border-purple-500/30 transition-all duration-200">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <span className="text-sm font-medium text-slate-200">{um.mission.title}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${um.mission.type === 'DAILY' ? 'bg-blue-500/15 text-blue-400' : um.mission.type === 'WEEKLY' ? 'bg-purple-500/15 text-purple-400' : 'bg-amber-500/15 text-amber-400'}`}>
-                          {um.mission.type === 'DAILY' ? 'Diária' : um.mission.type === 'WEEKLY' ? 'Semanal' : 'Especial'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${um.mission.type === 'DAILY' ? 'bg-blue-500/15 text-blue-400' : um.mission.type === 'WEEKLY' ? 'bg-purple-500/15 text-purple-400' : um.mission.type === 'MONTHLY' ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                          {um.mission.type === 'DAILY' ? 'Diária' : um.mission.type === 'WEEKLY' ? 'Semanal' : um.mission.type === 'MONTHLY' ? 'Mensal' : 'Especial'}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mb-2">{um.mission.description}</p>
@@ -226,6 +278,53 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* AI Advisor */}
+        {advisor && (
+          <div className="glass rounded-2xl p-5 border border-purple-500/20 bg-purple-500/5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-lg">🧠</div>
+              <div className="flex-1">
+                <h2 className="font-semibold text-slate-200 text-sm">Conselheiro do Sistema</h2>
+                <p className="text-xs text-purple-400">Análise de atributos em tempo real</p>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 font-semibold tracking-wider">IA</span>
+            </div>
+
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4">
+              <p className="text-xs text-amber-400 font-semibold mb-2">⚠️ Atributos mais fracos detectados</p>
+              <div className="flex gap-3 mb-2">
+                {advisor.weakest.map((w: any, i: number) => (
+                  <div key={w.key} className={`flex items-center gap-1.5 ${i === 0 ? 'text-amber-300' : 'text-slate-400'}`}>
+                    <span className="font-bold text-sm">{w.label}</span>
+                    <span className="text-xs opacity-70">({w.value})</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400 italic leading-relaxed">"{advisor.insight}"</p>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Tarefas recomendadas para você</p>
+            <div className="space-y-2">
+              {advisor.suggestions.map((s: any, i: number) => (
+                <div key={i} className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800/70 transition-colors group">
+                  <span className="text-lg shrink-0">{CATEGORY_ICONS[s.category as keyof typeof CATEGORY_ICONS] || '⚡'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-200 font-medium leading-snug">{s.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{s.reason}</p>
+                    <p className="text-xs text-slate-600 mt-0.5">⏱ {s.estimatedMinutes >= 60 ? `${Math.round(s.estimatedMinutes / 60)}h` : `${s.estimatedMinutes} min`}</p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/tasks?new=1')}
+                    className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/35 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    + Criar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
@@ -237,11 +336,27 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     orange: 'border-orange-500/20 bg-orange-500/5',
     amber: 'border-amber-500/20 bg-amber-500/5',
     emerald: 'border-emerald-500/20 bg-emerald-500/5',
+    violet: 'border-violet-500/20 bg-violet-500/5',
   }
   return (
     <div className={`glass rounded-2xl p-4 border ${colors[color]} transition-all duration-200 hover:scale-[1.02]`}>
       <div className="flex items-center gap-2 mb-2">{icon}<span className="text-xs text-slate-500 font-medium">{label}</span></div>
       <p className="text-2xl font-bold text-white">{value ?? '—'}</p>
+    </div>
+  )
+}
+
+function CombatStatCard({ icon, label, value, color, bg, border }: {
+  icon: React.ReactNode; label: string; value: number; color: string; bg: string; border: string
+}) {
+  const textColor: Record<string, string> = { red: 'text-red-400', orange: 'text-orange-400', blue: 'text-blue-400' }
+  return (
+    <div className={`glass rounded-2xl p-4 border ${border} ${bg} transition-all duration-200 hover:scale-[1.02]`}>
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <span className="text-xs text-slate-500 font-medium">{label}</span>
+      </div>
+      <p className={`text-2xl font-bold ${textColor[color] ?? 'text-white'}`}>{value}</p>
     </div>
   )
 }

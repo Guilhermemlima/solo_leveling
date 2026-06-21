@@ -1,13 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, CalendarDays, Download, LogOut, Save, Settings, ShieldAlert, Trash2, Upload } from 'lucide-react'
+import { Bell, CalendarDays, Download, FileText, LogOut, Save, Settings, ShieldAlert, Trash2, Upload, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Input, Select } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { SPECIALIZATIONS } from '@/lib/specializations'
+import { AvatarPicker } from '@/components/ui/AvatarPicker'
 
 export default function SettingsPage() {
   const { user, logout, refreshUser } = useAuth()
@@ -20,9 +21,12 @@ export default function SettingsPage() {
   const [specialization, setSpecialization] = useState('ARCHITECT')
   const [saving, setSaving] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [resetInput, setResetInput] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -60,7 +64,7 @@ export default function SettingsPage() {
     if (next && 'Notification' in window) {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') return toast('Permissão de notificações não concedida', 'error')
-      new Notification('Chi Navy System', { body: 'Lembretes ativados. Sua próxima missão espera por você.', icon: '/icon.svg' })
+      new Notification('Ascend System', { body: 'Lembretes ativados. Sua próxima missão espera por você.', icon: '/icon.svg' })
     }
     setNotifications(next)
     try { await patchSettings({ notificationsEnabled: next }); toast('Preferência salva', 'success') }
@@ -69,10 +73,13 @@ export default function SettingsPage() {
 
   const resetProgress = async () => {
     setBusy(true)
-    const response = await fetch('/api/user/reset', { method: 'POST' })
+    const response = await fetch('/api/user/reset', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: resetPassword }),
+    })
+    const data = await response.json()
     if (response.ok) { await refreshUser(); router.push('/dashboard'); toast('Progresso reiniciado', 'success') }
-    else toast('Erro ao resetar', 'error')
-    setBusy(false); setConfirmReset(false)
+    else toast(data.error ?? 'Erro ao resetar', 'error')
+    setBusy(false); setConfirmReset(false); setResetInput(''); setResetPassword('')
   }
 
   const deleteAccount = async () => {
@@ -81,7 +88,7 @@ export default function SettingsPage() {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: deletePassword }),
     })
     const data = await response.json()
-    if (response.ok) { toast('Conta excluída', 'info'); router.push('/register') }
+    if (response.ok) { toast('Conta excluída', 'info'); router.push('/login') }
     else toast(data.error, 'error')
     setBusy(false); setConfirmDelete(false)
   }
@@ -104,10 +111,54 @@ export default function SettingsPage() {
     <div><h1 className="text-2xl font-bold text-white flex items-center gap-2"><Settings className="text-slate-400" /> Configurações</h1>
       <p className="text-sm text-slate-400">Perfil, preferências, privacidade e seus dados.</p></div>
 
+    {showAvatarPicker && (
+      <AvatarPicker
+        current={form.avatarUrl}
+        onSelect={async (dataUrl) => {
+          setForm(f => ({ ...f, avatarUrl: dataUrl }))
+          setShowAvatarPicker(false)
+          try {
+            await fetch('/api/user/profile', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatarUrl: dataUrl }),
+            })
+            await refreshUser()
+            toast('Avatar atualizado!', 'success')
+          } catch {
+            toast('Erro ao salvar avatar', 'error')
+          }
+        }}
+        onClose={() => setShowAvatarPicker(false)}
+      />
+    )}
+
     <form onSubmit={saveProfile} className="glass neon-border rounded-2xl p-6 space-y-4">
       <h2 className="font-semibold text-slate-200">Perfil e evolução</h2>
+
+      {/* Avatar picker trigger */}
+      <div className="flex items-center gap-4">
+        <div className="relative shrink-0">
+          {form.avatarUrl ? (
+            <img src={form.avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-2 border-purple-500/50" style={{ boxShadow: '0 0 20px rgba(139,92,246,0.3)' }} />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-dashed border-slate-600 flex items-center justify-center text-3xl">👤</div>
+          )}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-slate-200 mb-1">Foto de perfil</p>
+          <p className="text-xs text-slate-500 mb-3">Escolha um avatar da galeria ou envie uma foto</p>
+          <button
+            type="button"
+            onClick={() => setShowAvatarPicker(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 text-purple-300 text-sm font-semibold hover:bg-purple-500/20 transition-all"
+          >
+            <UserCircle size={15} /> Alterar avatar
+          </button>
+        </div>
+      </div>
+
       <Input label="Nome" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-      <Input label="URL do avatar" type="url" value={form.avatarUrl} onChange={e => setForm({ ...form, avatarUrl: e.target.value })} placeholder="https://..." />
       <Select label="Classe" value={form.selectedClassId} onChange={e => setForm({ ...form, selectedClassId: e.target.value })}>
         <option value="">Sem classe</option>{classes.map(item => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}
       </Select>
@@ -129,7 +180,10 @@ export default function SettingsPage() {
     <section className="glass neon-border rounded-2xl p-6 space-y-3">
       <h2 className="font-semibold text-slate-200">Conta e dados</h2>
       <div className="rounded-xl bg-slate-900/50 p-3 text-sm"><p className="text-slate-500">E-mail</p><p className="text-slate-200">{user?.email}</p></div>
-      <a href="/api/user/export" download><Button variant="secondary" className="w-full"><Download size={15} /> Exportar todos os meus dados</Button></a>
+      <button onClick={() => window.open('/report', '_blank')} className="flex items-center justify-center gap-2 w-full rounded-xl border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 text-sm font-semibold text-purple-300 hover:bg-purple-500/20 transition-all">
+        <FileText size={15} /> Gerar Relatório PDF de Evolução
+      </button>
+      <a href="/api/user/export" download><Button variant="secondary" className="w-full"><Download size={15} /> Exportar dados brutos (JSON)</Button></a>
       <a href="/api/user/calendar" download><Button variant="secondary" className="w-full"><CalendarDays size={15} /> Exportar tarefas para o calendário</Button></a>
       <label className="block">
         <input type="file" accept="application/json" className="hidden" onChange={event => void importData(event.target.files?.[0])} />
@@ -146,7 +200,54 @@ export default function SettingsPage() {
         <Button variant="danger" className="mt-3" disabled={!deletePassword} onClick={() => setConfirmDelete(true)}>Excluir minha conta</Button></div>
     </section>
 
-    <ConfirmModal open={confirmReset} danger loading={busy} title="Resetar progresso?" message="Tarefas, itens, conquistas e evolução serão apagados. Sua conta será mantida." confirmLabel="Resetar" onConfirm={resetProgress} onCancel={() => setConfirmReset(false)} />
+    {confirmReset && (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="glass neon-border rounded-2xl p-6 max-w-md w-full space-y-4">
+          <div className="text-center">
+            <div className="text-4xl mb-3">⚠️</div>
+            <h3 className="text-lg font-bold text-red-400">Resetar todo o progresso?</h3>
+            <p className="text-sm text-slate-400 mt-2">
+              Esta ação é <strong className="text-red-400">irreversível</strong>. Tarefas, histórico, inventário, conquistas e todo seu progresso serão apagados permanentemente.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-slate-400">
+              Digite <strong className="text-red-400">RESETAR</strong> para confirmar:
+            </label>
+            <input
+              type="text"
+              value={resetInput}
+              onChange={e => setResetInput(e.target.value.toUpperCase())}
+              placeholder="RESETAR"
+              className="w-full bg-slate-900/60 border border-red-500/30 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 px-4 py-2.5 text-sm"
+            />
+            <label className="text-sm text-slate-400">Sua senha para confirmar:</label>
+            <input
+              type="password"
+              value={resetPassword}
+              onChange={e => setResetPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full bg-slate-900/60 border border-red-500/30 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 px-4 py-2.5 text-sm"
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setConfirmReset(false); setResetInput('') }}
+              className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 text-sm transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={resetProgress}
+              disabled={resetInput !== 'RESETAR' || !resetPassword || busy}
+              className="flex-1 py-2.5 rounded-lg bg-red-500/80 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+            >
+              {busy ? 'Resetando...' : 'Confirmar Reset'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <ConfirmModal open={confirmDelete} danger loading={busy} title="Excluir conta definitivamente?" message="Todos os seus dados serão removidos. Esta ação não pode ser desfeita." confirmLabel="Excluir conta" onConfirm={deleteAccount} onCancel={() => setConfirmDelete(false)} />
   </div>
 }

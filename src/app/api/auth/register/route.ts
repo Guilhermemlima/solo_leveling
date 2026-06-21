@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'E-mail já cadastrado' }, { status: 409 })
   }
   try {
-    const missions = await prisma.mission.findMany({ select: { id: true } })
+    const missions = await prisma.mission.findMany({ where: { minDayUnlock: 0 }, select: { id: true } })
     const user = await prisma.user.create({
       data: {
         name, email, passwordHash: await hashPassword(password),

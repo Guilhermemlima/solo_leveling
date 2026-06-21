@@ -131,9 +131,15 @@ export default function ChestsPage() {
               return (
                 <div key={uc.id} className="glass rounded-2xl p-5 border text-center flex flex-col items-center transition-transform hover:scale-[1.03]"
                   style={{ borderColor: `${color}33`, boxShadow: `0 0 20px ${color}14` }}>
-                  <div className="relative mb-2">
-                    <span className="absolute inset-0 flex items-center justify-center text-5xl blur-md opacity-40">{uc.chest.icon}</span>
-                    <span className="relative text-5xl float-anim">{uc.chest.icon}</span>
+                  <div className="relative mb-2 w-20 h-20 mx-auto">
+                    {uc.chest.imageUrl ? (
+                      <img src={uc.chest.imageUrl} alt={uc.chest.name} className="w-full h-full object-contain float-anim" />
+                    ) : (
+                      <>
+                        <span className="absolute inset-0 flex items-center justify-center text-5xl blur-md opacity-40">{uc.chest.icon}</span>
+                        <span className="relative flex items-center justify-center w-full h-full text-5xl float-anim">{uc.chest.icon}</span>
+                      </>
+                    )}
                     {uc.quantity > 1 && (
                       <span className="absolute -top-1 -right-2 text-xs font-bold bg-slate-900 border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-slate-200">×{uc.quantity}</span>
                     )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
+import { computeEquipBonuses, deriveStats, type Attributes } from '@/lib/battle'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -23,10 +24,24 @@ export async function GET() {
     prisma.task.groupBy({ by: ['category'], where: { userId: auth.userId, status: 'COMPLETED' }, _count: true }),
   ])
 
+  const equipBonuses = computeEquipBonuses(
+    user.inventory.map(i => ({
+      bonusType: i.equipment.bonusType,
+      bonusValue: i.equipment.bonusValue || 0,
+      upgradeLevel: i.upgradeLevel,
+    }))
+  )
+  const combatStats = deriveStats({
+    name: user.name, icon: '🧑', level: user.level,
+    attributes: (user.attributes || {}) as Attributes,
+    equipBonuses,
+  })
+
   const { passwordHash: _, ...safeUser } = user
 
   return NextResponse.json({
     ...safeUser,
+    combatStats,
     stats: {
       totalTasksCompleted: totalTasks,
       tasksByCategory,

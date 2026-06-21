@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
+import { Heart, Swords, Shield, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { XPBar } from '@/components/game/XPBar'
 import { RankBadge } from '@/components/game/RankBadge'
@@ -80,23 +81,55 @@ export default function ProfilePage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Attributes — Radar */}
-        <div className="glass neon-border rounded-2xl p-5">
-          <h3 className="font-semibold text-slate-200 mb-2">Atributos</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <RadarChart data={radarData} outerRadius="72%">
-              <PolarGrid stroke="#1e1e3a" />
-              <PolarAngleAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <Radar dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill="#6366f1" fillOpacity={0.35} />
-            </RadarChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
-            {Object.entries(ATTR_LABELS).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 flex items-center gap-1">{ATTR_ICONS[key]} {label}</span>
-                <span className="text-indigo-400 font-semibold">{(attrs[key] as number) || 0}</span>
-              </div>
-            ))}
+        <div className="glass neon-border rounded-2xl p-5 space-y-4">
+          <div>
+            <h3 className="font-semibold text-slate-200 mb-2">Atributos</h3>
+            <ResponsiveContainer width="100%" height={240}>
+              <RadarChart data={radarData} outerRadius="72%">
+                <PolarGrid stroke="#1e1e3a" />
+                <PolarAngleAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Radar dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill="#6366f1" fillOpacity={0.35} />
+              </RadarChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
+              {Object.entries(ATTR_LABELS).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 flex items-center gap-1">{ATTR_ICONS[key]} {label}</span>
+                  <span className="text-indigo-400 font-semibold">{(attrs[key] as number) || 0}</span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Combat stats derived from attributes */}
+          {profile.combatStats && (
+            <div className="border-t border-slate-800/60 pt-4">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Poder de combate</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                <div className="bg-slate-900/50 rounded-xl py-2.5">
+                  <Heart size={13} className="text-red-400 mx-auto mb-1" />
+                  <p className="text-[10px] text-slate-500">HP</p>
+                  <p className="text-sm font-bold text-red-300">{profile.combatStats.hp}</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-xl py-2.5">
+                  <Swords size={13} className="text-orange-400 mx-auto mb-1" />
+                  <p className="text-[10px] text-slate-500">ATK</p>
+                  <p className="text-sm font-bold text-orange-300">{profile.combatStats.atk}</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-xl py-2.5">
+                  <Shield size={13} className="text-blue-400 mx-auto mb-1" />
+                  <p className="text-[10px] text-slate-500">DEF</p>
+                  <p className="text-sm font-bold text-blue-300">{profile.combatStats.def}</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-xl py-2.5">
+                  <Zap size={13} className="text-purple-400 mx-auto mb-1" />
+                  <p className="text-[10px] text-slate-500">Poder</p>
+                  <p className="text-sm font-bold text-purple-300">{profile.combatStats.power}</p>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-600 mt-2 text-center">Inclui bônus de equipamentos equipados</p>
+            </div>
+          )}
         </div>
 
         {/* Equipped Items */}

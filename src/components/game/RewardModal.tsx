@@ -14,6 +14,8 @@ interface RewardModalProps {
     streakReward?: { essences: number; label: string } | null
     attributeGains?: Record<string, number>
     classBonus?: { name?: string; percent?: number } | null
+    specializationBonus?: { name?: string; percent?: number } | null
+    chestReward?: { rank: string; name: string; icon: string } | null
   } | null
   onClose: () => void
 }
@@ -97,6 +99,25 @@ export function RewardModal({ reward, onClose }: RewardModalProps) {
             <div className="mb-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
               <p className="text-orange-300 text-sm font-semibold">🔥 {reward.streakReward.label}</p>
               <p className="text-orange-400 text-xs mt-0.5">+{reward.streakReward.essences} Essências bônus!</p>
+            </div>
+          )}
+
+          {reward.specializationBonus && (
+            <div className="mb-3 p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center gap-1.5">
+              <Sparkles size={13} className="text-violet-400" />
+              <p className="text-violet-300 text-xs font-medium">
+                Especialização <span className="font-semibold">{reward.specializationBonus.name}</span> (+{reward.specializationBonus.percent}%) aplicada!
+              </p>
+            </div>
+          )}
+
+          {reward.chestReward && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
+              <span className="text-2xl">{reward.chestReward.icon}</span>
+              <div>
+                <p className="text-amber-300 text-sm font-semibold">Caixa desbloqueada!</p>
+                <p className="text-amber-400 text-xs mt-0.5">{reward.chestReward.name} adicionada ao seu inventário</p>
+              </div>
             </div>
           )}
 

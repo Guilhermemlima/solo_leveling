@@ -62,14 +62,17 @@ export async function syncUserDaily(userId: string) {
     }),
   )
 
-  // 2) Reiniciar missões diárias/semanais cujo período passou (resgatadas ou não)
+  // 2) Reiniciar missões diárias/semanais/mensais cujo período passou
+  //    Só reseta ACTIVE e CLAIMED — COMPLETED (recompensa pendente) fica até ser resgatada
   const staleMissions = await prisma.userMission.findMany({
     where: {
       userId,
-      mission: { type: { in: ['DAILY', 'WEEKLY'] } },
+      status: { in: ['ACTIVE', 'CLAIMED'] },
+      mission: { type: { in: ['DAILY', 'WEEKLY', 'MONTHLY'] } },
       OR: [
         { mission: { type: 'DAILY' }, assignedAt: { lt: today } },
         { mission: { type: 'WEEKLY' }, assignedAt: { lt: weekStart } },
+        { mission: { type: 'MONTHLY' }, assignedAt: { lt: monthStart } },
       ],
     },
     include: { mission: true },
@@ -80,6 +83,27 @@ export async function syncUserDaily(userId: string) {
       prisma.userMission.update({
         where: { id: um.id },
         data: { progress: 0, status: 'ACTIVE', completedAt: null, claimedAt: null, assignedAt: now },
+      })
+    )
+  }
+
+  // 3a) Desbloqueio progressivo: atribuir missões que o usuário ainda não tem
+  //     com base em quantos dias se passaram desde o cadastro
+  const daysSinceCreation = Math.floor((now.getTime() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+  const [availableMissions, existingUserMissions] = await Promise.all([
+    prisma.mission.findMany({
+      where: { minDayUnlock: { lte: daysSinceCreation } },
+      select: { id: true },
+    }),
+    prisma.userMission.findMany({ where: { userId }, select: { missionId: true } }),
+  ])
+  const existingIds = new Set(existingUserMissions.map(um => um.missionId))
+  const toAssign = availableMissions.filter(m => !existingIds.has(m.id))
+  if (toAssign.length > 0) {
+    ops.push(
+      prisma.userMission.createMany({
+        data: toAssign.map(m => ({ userId, missionId: m.id })),
+        skipDuplicates: true,
       })
     )
   }

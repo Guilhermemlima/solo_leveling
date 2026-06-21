@@ -20,12 +20,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ message: 'Item desequipado', isEquipped: false })
   }
 
-  // Unequip same type
-  await prisma.inventory.updateMany({
-    where: { userId: auth.userId, equipment: { type: item.equipment.type }, isEquipped: true },
-    data: { isEquipped: false }
+  await prisma.$transaction(async tx => {
+    await tx.inventory.updateMany({
+      where: { userId: auth.userId, equipment: { type: item.equipment.type }, isEquipped: true },
+      data: { isEquipped: false },
+    })
+    await tx.inventory.update({ where: { id }, data: { isEquipped: true } })
   })
-
-  await prisma.inventory.update({ where: { id }, data: { isEquipped: true } })
   return NextResponse.json({ message: 'Item equipado!', isEquipped: true })
 }

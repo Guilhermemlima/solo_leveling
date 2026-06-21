@@ -42,29 +42,37 @@ export default function ReportsPage() {
         {/* Weekly tasks */}
         <div className="glass neon-border rounded-2xl p-5">
           <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-indigo-400" /> Tarefas por Dia (últimos 7 dias)</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.dailyTasks}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
-              <XAxis dataKey="day" stroke="#475569" fontSize={11} />
-              <YAxis stroke="#475569" fontSize={11} />
-              <Tooltip contentStyle={{ background: '#0f0f1e', border: '1px solid #6366f130', borderRadius: 8, color: '#e2e8f0' }} />
-              <Bar dataKey="count" fill="#6366f1" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <div className="min-w-[280px]">
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.dailyTasks}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
+                  <XAxis dataKey="day" stroke="#475569" fontSize={11} tickFormatter={(v: string) => v.slice(0, 3)} />
+                  <YAxis stroke="#475569" fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#0f0f1e', border: '1px solid #6366f130', borderRadius: 8, color: '#e2e8f0' }} />
+                  <Bar dataKey="count" fill="#6366f1" radius={4} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* XP per day */}
         <div className="glass neon-border rounded-2xl p-5">
           <h3 className="font-semibold text-slate-200 mb-4">XP por Dia</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data.dailyXp}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
-              <XAxis dataKey="day" stroke="#475569" fontSize={11} />
-              <YAxis stroke="#475569" fontSize={11} />
-              <Tooltip contentStyle={{ background: '#0f0f1e', border: '1px solid #8b5cf630', borderRadius: 8, color: '#e2e8f0' }} />
-              <Line type="monotone" dataKey="xp" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <div className="min-w-[280px]">
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={data.dailyXp}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
+                  <XAxis dataKey="day" stroke="#475569" fontSize={11} tickFormatter={(v: string) => v.slice(0, 3)} />
+                  <YAxis stroke="#475569" fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#0f0f1e', border: '1px solid #8b5cf630', borderRadius: 8, color: '#e2e8f0' }} />
+                  <Line type="monotone" dataKey="xp" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* Category distribution */}

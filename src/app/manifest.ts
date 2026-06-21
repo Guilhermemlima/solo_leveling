@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Chi Navy System',
-    short_name: 'Chi Navy',
+    name: 'Ascend System',
+    short_name: 'Ascend',
     description: 'RPG dark fantasy de evolução pessoal: missões reais viram poder.',
     start_url: '/dashboard',
     display: 'standalone',

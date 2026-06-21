@@ -93,14 +93,8 @@ export default function LoginPage() {
           <p className="text-slate-400 text-sm">
             Não tem uma conta?{' '}
             <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-              Criar conta
+              Criar conta grátis
             </Link>
-          </p>
-        </div>
-
-        <div className="mt-4 p-3 bg-indigo-500/5 border border-indigo-500/15 rounded-lg">
-          <p className="text-xs text-slate-500 text-center">
-            Demo: <span className="text-indigo-400">teste@ascend.com</span> / <span className="text-indigo-400">admin123</span>
           </p>
         </div>
       </div>

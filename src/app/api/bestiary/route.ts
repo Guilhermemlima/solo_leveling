@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
-import { deriveStats, type Attributes, type Combatant } from '@/lib/battle'
+import { deriveStats, computeEquipBonuses, type Attributes, type Combatant } from '@/lib/battle'
 import { readiness } from '@/lib/pve'
 
 const RANK_ORDER: Record<string, number> = { E: 0, D: 1, C: 2, B: 3, A: 4, S: 5 }
@@ -16,10 +16,14 @@ export async function GET() {
   })
   if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
 
-  const equipBonus = user.inventory.reduce((s, i) => s + (i.equipment.bonusValue || 0), 0)
   const player: Combatant = {
     name: user.name, icon: '🧑', level: user.level,
-    attributes: (user.attributes || {}) as Attributes, equipBonus,
+    attributes: (user.attributes || {}) as Attributes,
+    equipBonuses: computeEquipBonuses(user.inventory.map(i => ({
+      bonusType: i.equipment.bonusType,
+      bonusValue: i.equipment.bonusValue || 0,
+      upgradeLevel: i.upgradeLevel,
+    }))),
   }
   const playerStats = deriveStats(player)
 
@@ -34,6 +38,7 @@ export async function GET() {
     type: e.type,
     isBoss: e.isBoss,
     icon: e.icon,
+    imageUrl: e.imageUrl,
     hp: e.hp,
     attack: e.attack,
     defense: e.defense,

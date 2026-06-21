@@ -127,11 +127,13 @@ export function chestForDailyRatio(ratio: number): { rank: ChestRank; special: b
   return null
 }
 
-/** Concede uma caixa ao usuário (incrementa a posse). */
-export async function grantChest(userId: string, rank: ChestRank, source = 'REWARD') {
-  const chest = await prisma.chest.findUnique({ where: { key: CHESTS[rank].key } })
+/** Concede uma caixa ao usuário. Aceita um cliente de transação Prisma opcional. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function grantChest(userId: string, rank: ChestRank, source = 'REWARD', tx?: any) {
+  const db = tx ?? prisma
+  const chest = await db.chest.findUnique({ where: { key: CHESTS[rank].key } })
   if (!chest) return null
-  await prisma.userChest.upsert({
+  await db.userChest.upsert({
     where: { userId_chestId: { userId, chestId: chest.id } },
     update: { quantity: { increment: 1 } },
     create: { userId, chestId: chest.id, quantity: 1, source },

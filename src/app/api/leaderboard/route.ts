@@ -8,26 +8,32 @@ export async function GET() {
   const auth = await getAuthUser()
   if (!auth) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const users = await prisma.user.findMany({
-    orderBy: [{ arenaPoints: 'desc' }, { totalXp: 'desc' }],
-    select: {
-      id: true,
-      name: true,
-      level: true,
-      avatarUrl: true,
-      arenaPoints: true,
-      arenaWins: true,
-      arenaLosses: true,
-      seasonPoints: true,
-      selectedClass: { select: { name: true, icon: true, color: true } },
-    },
-  })
+  const [users, seasonUsers] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: [{ arenaPoints: 'desc' }, { totalXp: 'desc' }],
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        level: true,
+        avatarUrl: true,
+        arenaPoints: true,
+        arenaWins: true,
+        arenaLosses: true,
+        selectedClass: { select: { name: true, icon: true, color: true } },
+      },
+    }),
+    prisma.user.findMany({
+      orderBy: { seasonPoints: 'desc' },
+      take: 20,
+      select: { id: true, name: true, level: true, seasonPoints: true },
+    }),
+  ])
 
   const entries = users.map((u, i) => {
     const rank = getRank(u.arenaPoints)
     return {
       position: i + 1,
-      id: u.id,
       name: u.name,
       level: u.level,
       avatarUrl: u.avatarUrl,
@@ -59,16 +65,12 @@ export async function GET() {
       : null,
     season: currentSeason(),
     seasonRewards: SEASON_REWARDS,
-    seasonLeaderboard: [...users]
-      .sort((a, b) => b.seasonPoints - a.seasonPoints)
-      .slice(0, 20)
-      .map((entry, index) => ({
-        position: index + 1,
-        id: entry.id,
-        name: entry.name,
-        level: entry.level,
-        points: entry.seasonPoints,
-        isMe: entry.id === auth.userId,
-      })),
+    seasonLeaderboard: seasonUsers.map((entry, index) => ({
+      position: index + 1,
+      name: entry.name,
+      level: entry.level,
+      points: entry.seasonPoints,
+      isMe: entry.id === auth.userId,
+    })),
   })
 }

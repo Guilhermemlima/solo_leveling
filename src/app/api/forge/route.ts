@@ -13,7 +13,7 @@ export async function GET() {
     orderBy: { acquiredAt: 'desc' },
   })
 
-  const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { essences: true } })
+  const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { essences: true, fragments: true } })
 
   const items = inventory.map(item => {
     const nextCost = item.upgradeLevel < MAX_UPGRADE ? upgradeCost(item.upgradeLevel) : null
@@ -27,6 +27,7 @@ export async function GET() {
       type: item.equipment.type,
       rarity: item.equipment.rarity,
       icon: item.equipment.icon,
+      imageUrl: item.equipment.imageUrl,
       isEquipped: item.isEquipped,
       bonusType: item.equipment.bonusType,
       baseBonus: item.equipment.bonusValue,
@@ -47,10 +48,9 @@ export async function GET() {
 
   const recent = await prisma.forgeLog.findMany({
     where: { userId: auth.userId },
-    include: { inventory: { include: { equipment: true } } },
     orderBy: { createdAt: 'desc' },
     take: 10,
   })
 
-  return NextResponse.json({ items, essences: user?.essences ?? 0, recent })
+  return NextResponse.json({ items, essences: user?.essences ?? 0, fragments: user?.fragments ?? 0, recent })
 }

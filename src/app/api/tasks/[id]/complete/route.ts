@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import {
-  calculateLevelUp, ATTRIBUTE_GAINS, STREAK_REWARDS, classXpMultiplier,
+  calculateLevelUp, ATTRIBUTE_GAINS, STREAK_REWARDS, classXpMultiplier, levelMultiplier,
 } from '@/lib/game-logic'
 import { completionSchema, parseJson } from '@/lib/validation'
 import { clientKey, rateLimit } from '@/lib/rate-limit'
@@ -33,6 +33,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     where: { userId_action_key: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey } },
   })
   if (existing?.result) return NextResponse.json(existing.result)
+
+  // Limite diário de 30 conclusões
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+  const todayCompleted = await prisma.taskExecution.count({
+    where: { userId: auth.userId, completedAt: { gte: todayStart } },
+  })
+  if (todayCompleted >= 30) {
+    return NextResponse.json(
+      { error: 'Limite diário de 30 tarefas atingido. Excelente trabalho, Ascendente! Volte amanhã.' },
+      { status: 429 }
+    )
+  }
 
   try {
     const result = await prisma.$transaction(async tx => {
@@ -85,11 +97,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         (specialization?.key === 'HARMONIZER' && ['SOCIAL', 'CREATIVITY'].includes(task.category))
       const specializationMult = specializationMatches ? 1.05 : 1
 
-      const xpGained = Math.round(task.xpReward * classMult * specializationMult)
-      const essenceFromTask = Math.round(task.essenceReward * classMult)
+      const lvlMult = levelMultiplier(user.level)
+      const xpGained = Math.round(task.xpReward * classMult * specializationMult * lvlMult)
+      const essenceFromTask = Math.round(task.essenceReward * classMult * lvlMult)
       const { level, currentXp, levelUps } = calculateLevelUp(user.level, user.currentXp, xpGained)
       const levelUpBonus = levelUps.length * 50
       const totalEssences = essenceFromTask + (streakReward?.essences || 0) + levelUpBonus
+      const FRAGMENT_PER_DIFFICULTY: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3, EXTREME: 5 }
+      const fragmentsGained = FRAGMENT_PER_DIFFICULTY[task.difficulty] ?? 1
 
       const attrGains = ATTRIBUTE_GAINS[task.category] || {}
       const attrUpdate: Record<string, number> = {}
@@ -105,13 +120,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           currentXp,
           totalXp: { increment: xpGained },
           essences: { increment: totalEssences },
+          fragments: { increment: fragmentsGained },
           currentStreak: newStreak,
           bestStreak: Math.max(user.bestStreak, newStreak),
           lastActiveDate: new Date(),
         },
       })
       if (Object.keys(attrUpdate).length) {
-        await tx.attribute.update({ where: { userId: auth.userId }, data: attrUpdate })
+        await tx.attribute.upsert({
+          where: { userId: auth.userId },
+          update: attrUpdate,
+          create: { userId: auth.userId, ...attrUpdate },
+        })
       }
 
       // Caixa de recompensa ao subir de nível (Chi Navy)
@@ -193,11 +213,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       for (const userMission of activeMissions) {
         const requirement = userMission.mission.requirementType
         const shouldIncrement =
-          ['TASKS_COMPLETED', 'DAILY_TASKS', 'WEEKLY_TASKS'].includes(requirement) ||
+          ['TASKS_COMPLETED', 'DAILY_TASKS', 'WEEKLY_TASKS', 'MONTHLY_TASKS'].includes(requirement) ||
           (requirement === 'CATEGORY_HEALTH_TRAINING' && ['HEALTH', 'TRAINING'].includes(task.category)) ||
           (requirement === 'CATEGORY_STUDY' && task.category === 'STUDY') ||
           (requirement === 'WEEKLY_TRAINING' && task.category === 'TRAINING') ||
-          (requirement === 'WEEKLY_STUDY' && task.category === 'STUDY')
+          (requirement === 'WEEKLY_STUDY' && task.category === 'STUDY') ||
+          (requirement === 'MONTHLY_TRAINING' && task.category === 'TRAINING') ||
+          (requirement === 'MONTHLY_STUDY' && task.category === 'STUDY') ||
+          (requirement === 'MONTHLY_HEALTH' && ['HEALTH', 'TRAINING'].includes(task.category))
         if (shouldIncrement) {
           const progress = userMission.progress + 1
           await tx.userMission.update({
@@ -215,6 +238,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const response = {
         xpGained,
         essencesGained: totalEssences,
+        fragmentsGained,
         levelUps,
         newLevel: level,
         newStreak,
@@ -234,11 +258,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         data: { result: JSON.parse(JSON.stringify(response)) as Prisma.InputJsonValue },
       })
       return response
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 15000 })
 
     return NextResponse.json(result)
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === 'P2002' || error.code === 'P2034')) {
       const receipt = await prisma.actionReceipt.findUnique({
         where: { userId_action_key: { userId: auth.userId, action: 'TASK_COMPLETE', key: idempotencyKey } },
       })

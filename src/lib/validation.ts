@@ -5,8 +5,14 @@ export const loginSchema = z.object({
   password: z.string().min(6).max(128),
 })
 
-export const registerSchema = loginSchema.extend({
+export const registerSchema = z.object({
   name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().max(255).transform(value => value.toLowerCase()),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter ao menos 8 caracteres')
+    .max(128)
+    .refine(p => /\d/.test(p), { message: 'Senha deve conter ao menos um número' }),
 })
 
 export const taskSchema = z.object({
@@ -39,7 +45,7 @@ export const onboardingSchema = z.object({
     'HEALTH', 'TRAINING', 'STUDY', 'WORK', 'FINANCE',
     'SPIRITUALITY', 'SOCIAL', 'HOME', 'PERSONAL_DEVELOPMENT', 'CREATIVITY',
   ])).min(1).max(5),
-  availableMinutes: z.coerce.number().int().min(10).max(240),
+  availableMinutes: z.coerce.number().int().min(5).max(1440),
   experienceLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
   availableEquipment: z.array(z.string().trim().min(1).max(50)).max(20),
   healthNotes: z.string().trim().max(500).optional().nullable(),

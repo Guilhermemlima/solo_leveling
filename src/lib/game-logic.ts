@@ -147,12 +147,26 @@ export const RARITY_LABELS: Record<string, string> = {
 export const EQUIP_TYPE_LABELS: Record<string, string> = {
   WEAPON: 'Arma',
   ARMOR: 'Armadura',
+  SHIELD: 'Escudo',
   RING: 'Anel',
+  BRACELET: 'Bracelete',
   AMULET: 'Amuleto',
   BOOTS: 'Botas',
   BOOK: 'Livro',
   MEDAL: 'Medalha',
   RELIC: 'Relíquia',
+  HELMET: 'Elmo',
+  CHESTPLATE: 'Peitoral',
+  PANTS: 'Calça',
+}
+
+/**
+ * Multiplicador de recompensas baseado no nível do usuário.
+ * +10% por nível, garantindo que o jogo se torne mais rentável
+ * conforme o jogador sobe (necessário para equilibrar itens caros).
+ */
+export function levelMultiplier(level: number): number {
+  return 1 + (level - 1) * 0.1
 }
 
 export const STREAK_REWARDS: Record<number, { essences: number; label: string }> = {

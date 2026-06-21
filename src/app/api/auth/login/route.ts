@@ -10,8 +10,12 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = parseJson(loginSchema, await req.json())
     if (!parsed.data) return NextResponse.json({ error: 'E-mail ou senha inválidos' }, { status: 400 })
+    const DUMMY_HASH = '$2a$12$dummy.hash.that.never.matches.any.password.ever.01234'
     const user = await prisma.user.findUnique({ where: { email: parsed.data.email }, include: { selectedClass: true } })
-    if (!user || !(await comparePassword(parsed.data.password, user.passwordHash))) {
+    const passwordValid = user
+      ? await comparePassword(parsed.data.password, user.passwordHash)
+      : await comparePassword(parsed.data.password, DUMMY_HASH)
+    if (!user || !passwordValid) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
     }
     const { passwordHash: _passwordHash, ...safeUser } = user

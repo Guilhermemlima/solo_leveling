@@ -6,6 +6,9 @@ const TRACKS = [
   { name: 'Epic Cinematic · Watermello', src: '/music/watermello-epic-cinematic-477135.mp3' },
   { name: 'Epic Cinematic · Apalonbeats', src: '/music/apalonbeats-epic-cinematic-epic-529530.mp3' },
   { name: 'Epic Cinematic · Nastelbom', src: '/music/nastelbom-epic-cinematic-453509.mp3' },
+  { name: 'Motivational Epic I · Paulyudin', src: '/music/paulyudin-motivational-epic-164834.mp3' },
+  { name: 'Motivational Epic II · Paulyudin', src: '/music/paulyudin-teaser-epic-motivational-164842.mp3' },
+  { name: 'Epic Cinematic · Sigmamusicart', src: '/music/sigmamusicart-epic-cinematic-504006.mp3' },
 ]
 
 const STORAGE_VOL = 'ascend-music-vol'

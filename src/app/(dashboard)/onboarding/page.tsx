@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Check, Clock, Dumbbell, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Clock, Dumbbell, Minus, Plus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
@@ -35,8 +35,12 @@ export default function OnboardingPage() {
   const toggle = (field: 'goals' | 'availableEquipment', value: string) => {
     setForm(current => {
       const values = current[field]
-      const next = values.includes(value) ? values.filter(item => item !== value) : [...values, value]
-      return { ...current, [field]: next.length ? next : values }
+      if (values.includes(value)) {
+        const next = values.filter(item => item !== value)
+        return { ...current, [field]: next.length ? next : values }
+      }
+      if (field === 'goals' && values.length >= 5) return current
+      return { ...current, [field]: [...values, value] }
     })
   }
 
@@ -75,17 +79,31 @@ export default function OnboardingPage() {
         <div className="glass neon-border rounded-3xl p-6 md:p-8">
           {step === 1 && (
             <div>
-              <h2 className="text-xl font-semibold text-white mb-1">O que você quer evoluir?</h2>
-              <p className="text-sm text-slate-500 mb-5">Escolha de uma a cinco áreas. Você poderá mudar depois.</p>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {goalEntries.map(([key, label]) => (
-                  <button key={key} onClick={() => toggle('goals', key)}
-                    className={`text-left rounded-xl p-3 border transition-all ${form.goals.includes(key) ? 'border-indigo-500 bg-indigo-500/12 text-indigo-200' : 'border-slate-700/50 text-slate-400 hover:border-slate-600'}`}>
-                    <span className="mr-2">{CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS]}</span>{label}
-                    {form.goals.includes(key) && <Check size={14} className="inline ml-2" />}
-                  </button>
-                ))}
+              <div className="flex items-start justify-between mb-5">
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-1">O que você quer evoluir?</h2>
+                  <p className="text-sm text-slate-500">Escolha de uma a cinco áreas. Você poderá mudar depois.</p>
+                </div>
+                <span className={`shrink-0 ml-4 mt-1 text-sm font-semibold px-2.5 py-1 rounded-lg ${form.goals.length >= 5 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-400'}`}>
+                  {form.goals.length}/5
+                </span>
               </div>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {goalEntries.map(([key, label]) => {
+                  const selected = form.goals.includes(key)
+                  const disabled = !selected && form.goals.length >= 5
+                  return (
+                    <button key={key} onClick={() => toggle('goals', key)} disabled={disabled}
+                      className={`text-left rounded-xl p-3 border transition-all ${selected ? 'border-indigo-500 bg-indigo-500/12 text-indigo-200' : disabled ? 'border-slate-800 text-slate-600 opacity-40 cursor-not-allowed' : 'border-slate-700/50 text-slate-400 hover:border-slate-600'}`}>
+                      <span className="mr-2">{CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS]}</span>{label}
+                      {selected && <Check size={14} className="inline ml-2" />}
+                    </button>
+                  )
+                })}
+              </div>
+              {form.goals.length >= 5 && (
+                <p className="mt-3 text-xs text-indigo-400/80">Limite atingido. Desmarque uma área para selecionar outra.</p>
+              )}
             </div>
           )}
 
@@ -95,9 +113,35 @@ export default function OnboardingPage() {
                 <h2 className="text-xl font-semibold text-white mb-1">Qual é a sua realidade hoje?</h2>
                 <p className="text-sm text-slate-500">Nada de recomendar academia para quem treina em casa.</p>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Input label="Minutos disponíveis por dia" type="number" min={10} max={240}
-                  value={form.availableMinutes} onChange={event => setForm({ ...form, availableMinutes: Number(event.target.value) })} />
+              <div className="grid sm:grid-cols-2 gap-4 items-end">
+                <div>
+                  <p className="text-sm text-slate-300 mb-2 flex items-center gap-2"><Clock size={15} /> Tempo disponível por dia</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setForm(f => ({ ...f, availableMinutes: Math.max(5, f.availableMinutes - 5) }))}
+                      className="w-10 h-10 rounded-xl border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-300 hover:border-indigo-500 hover:text-indigo-300 transition-colors">
+                      <Minus size={16} />
+                    </button>
+                    <div className="flex-1 text-center">
+                      <p className="text-2xl font-black text-white">
+                        {form.availableMinutes >= 60
+                          ? `${Math.floor(form.availableMinutes / 60)}h${form.availableMinutes % 60 > 0 ? ` ${form.availableMinutes % 60}min` : ''}`
+                          : `${form.availableMinutes}min`}
+                      </p>
+                    </div>
+                    <button onClick={() => setForm(f => ({ ...f, availableMinutes: f.availableMinutes + 5 }))}
+                      className="w-10 h-10 rounded-xl border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-300 hover:border-indigo-500 hover:text-indigo-300 transition-colors">
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    {[15, 30, 60, 90, 120, 180].map(min => (
+                      <button key={min} onClick={() => setForm(f => ({ ...f, availableMinutes: min }))}
+                        className={`px-2.5 py-1 rounded-lg text-xs border transition-colors ${form.availableMinutes === min ? 'border-indigo-500 bg-indigo-500/15 text-indigo-300' : 'border-slate-700 text-slate-500 hover:border-slate-500'}`}>
+                        {min < 60 ? `${min}min` : `${min / 60}h`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <Select label="Experiência" value={form.experienceLevel} onChange={event => setForm({ ...form, experienceLevel: event.target.value })}>
                   <option value="BEGINNER">Iniciante</option><option value="INTERMEDIATE">Intermediário</option><option value="ADVANCED">Avançado</option>
                 </Select>

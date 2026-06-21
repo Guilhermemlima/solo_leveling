@@ -11,6 +11,7 @@ interface User {
   currentXp: number
   totalXp: number
   essences: number
+  fragments?: number
   currentStreak: number
   bestStreak: number
   penaltiesEnabled?: boolean
@@ -45,7 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const res = await fetch('/api/auth/me')
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 10_000)
+      const res = await fetch('/api/auth/me', { signal: controller.signal, cache: 'no-store' })
+      clearTimeout(timeout)
       if (res.ok) {
         const data = await res.json()
         setUser(data)
@@ -59,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshUser().finally(() => setLoading(false))
-  }, [])
+  }, []) // eslint-disable-line
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })

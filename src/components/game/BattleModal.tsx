@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Swords, Zap, Coins, Shield, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Confetti } from '@/components/game/Confetti'
@@ -22,6 +23,7 @@ export interface BattleData {
   levelUps: number[]
   newLevel: number
   rankUp?: { tier: string; label: string; essences: number } | null
+  rankBlocked?: { tier: string; label: string; missing: string[] } | null
   chestDrop?: { rank: string; name: string; icon: string } | null
 }
 
@@ -32,9 +34,12 @@ interface Props {
 }
 
 export function BattleModal({ battle, playerName, onClose }: Props) {
-  const [step, setStep] = useState(0) // quantos rounds já reproduzidos
+  const [step, setStep] = useState(0)
   const [finished, setFinished] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!battle) { setStep(0); setFinished(false); return }
@@ -51,7 +56,7 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
     return () => { if (timer.current) clearTimeout(timer.current) }
   }, [battle])
 
-  if (!battle) return null
+  if (!battle || !mounted) return null
 
   const maxPlayerHp = battle.playerStats.hp
   const maxOppHp = battle.opponentStats.hp
@@ -66,8 +71,8 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
     setFinished(true)
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {finished && battle.playerWon && <Confetti />}
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={finished ? onClose : undefined} />
       <div className="relative z-10 w-full max-w-md glass neon-border rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #0f0f1e, #0a0a16)' }}>
@@ -113,6 +118,14 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
                 <p className="text-xs text-pink-300/80 mt-0.5">+{battle.rankUp.essences} Essências de marco</p>
               </div>
             )}
+            {battle.rankBlocked && (
+              <div className="mb-3 p-2.5 rounded-xl border bg-amber-500/10 border-amber-500/30">
+                <p className="text-sm font-bold text-amber-400">⚠️ Patente {battle.rankBlocked.label} bloqueada</p>
+                {battle.rankBlocked.missing.length > 0 && (
+                  <p className="text-xs text-amber-300/80 mt-0.5">Faltam: {battle.rankBlocked.missing.join(', ')}</p>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 justify-center mb-4">
               <span className="flex items-center gap-1 text-sm bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-1.5 text-indigo-300">
                 <Zap size={13} /> +{battle.rewards.xp} XP
@@ -138,7 +151,8 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

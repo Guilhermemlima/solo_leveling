@@ -16,7 +16,14 @@ export async function GET() {
   const [executions, user, totalEssences] = await Promise.all([
     prisma.taskExecution.findMany({
       where: { userId: auth.userId },
-      include: { task: true },
+      select: {
+        completedAt: true,
+        durationMinutes: true,
+        xpGained: true,
+        perceivedDifficulty: true,
+        actualValue: true,
+        task: { select: { category: true, estimatedMinutes: true, targetValue: true } },
+      },
       orderBy: { completedAt: 'desc' },
     }),
     prisma.user.findUnique({ where: { id: auth.userId }, select: { totalXp: true, currentStreak: true, bestStreak: true } }),

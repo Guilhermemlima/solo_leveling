@@ -2,7 +2,9 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
+const _rawSecret = process.env.JWT_SECRET
+if (!_rawSecret) throw new Error('[auth] JWT_SECRET não definido. Defina a variável de ambiente antes de iniciar.')
+const JWT_SECRET: string = _rawSecret
 
 export interface JWTPayload {
   userId: string

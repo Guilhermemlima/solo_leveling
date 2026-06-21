@@ -53,16 +53,31 @@ export async function POST() {
     return NextResponse.json({ error: 'Conclua ao menos 80% das missões diárias para resgatar a caixa' }, { status: 400 })
   }
 
-  // marca o resgate (idempotência) e concede a(s) caixa(s)
-  await prisma.actionReceipt.create({
-    data: { userId: auth.userId, action: 'DAILY_CHEST', key, result: { ratio: state.ratio, rank: reward.rank, special: reward.special } },
-  })
-  const granted = [await grantChest(auth.userId, reward.rank, 'DAILY')]
-  if (reward.special) granted.push(await grantChest(auth.userId, 'SPECIAL', 'DAILY'))
+  try {
+    const granted = await prisma.$transaction(async tx => {
+      const receipt = await tx.actionReceipt.findUnique({
+        where: { userId_action_key: { userId: auth.userId, action: 'DAILY_CHEST', key } },
+      })
+      if (receipt) throw new Error('ALREADY_CLAIMED')
 
-  await prisma.activityHistory.create({
-    data: { userId: auth.userId, type: 'DAILY_CHEST', description: `Recompensa diária resgatada (${Math.round(state.ratio * 100)}%)`, xpChange: 0, essenceChange: 0 },
-  })
+      await tx.actionReceipt.create({
+        data: { userId: auth.userId, action: 'DAILY_CHEST', key, result: { ratio: state.ratio, rank: reward.rank, special: reward.special } },
+      })
 
-  return NextResponse.json({ granted: granted.filter(Boolean) })
+      const results = [await grantChest(auth.userId, reward.rank, 'DAILY', tx)]
+      if (reward.special) results.push(await grantChest(auth.userId, 'SPECIAL', 'DAILY', tx))
+
+      await tx.activityHistory.create({
+        data: { userId: auth.userId, type: 'DAILY_CHEST', description: `Recompensa diária resgatada (${Math.round(state.ratio * 100)}%)`, xpChange: 0, essenceChange: 0 },
+      })
+
+      return results
+    })
+    return NextResponse.json({ granted: granted.filter(Boolean) })
+  } catch (err) {
+    if (err instanceof Error && err.message === 'ALREADY_CLAIMED') {
+      return NextResponse.json({ error: 'Recompensa diária já resgatada hoje' }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Não foi possível resgatar a recompensa' }, { status: 500 })
+  }
 }

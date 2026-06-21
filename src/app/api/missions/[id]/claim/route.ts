@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { calculateLevelUp } from '@/lib/game-logic'
+import { grantChest, chestRankForLevel } from '@/lib/chests'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthUser()
@@ -37,7 +38,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
           xpChange: userMission.mission.xpReward, essenceChange: userMission.mission.essenceReward,
         },
       })
-      return { xpGained: userMission.mission.xpReward, essencesGained: userMission.mission.essenceReward, levelUps: progress.levelUps }
+      let chestReward = null
+      if (progress.levelUps.length > 0) {
+        const rank = chestRankForLevel(progress.level)
+        chestReward = await grantChest(auth.userId, rank, 'LEVEL_UP', tx)
+      }
+      return { xpGained: userMission.mission.xpReward, essencesGained: userMission.mission.essenceReward, levelUps: progress.levelUps, chestReward }
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
     return NextResponse.json(reward)
   } catch (error) {

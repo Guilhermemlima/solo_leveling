@@ -2,12 +2,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import {
   LayoutDashboard, CheckSquare, Target, User, Package, ShoppingBag,
-  Trophy, Clock, BarChart3, Settings, LogOut, Zap, ChevronRight, Swords, Medal,
-  Layers3, BrainCircuit, Users, MessageCircle, Gift, Skull, Hammer
+  Trophy, Clock, BarChart3, Settings, LogOut, ChevronRight, Swords, Medal,
+  Layers3, BrainCircuit, Users, MessageCircle, Gift, Hammer
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { gsap, EASE_OUT_EXPO } from '@/lib/gsap-init'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,7 +17,6 @@ const navItems = [
   { href: '/routines', icon: Layers3, label: 'Rotinas' },
   { href: '/missions', icon: Target, label: 'Missões' },
   { href: '/arena', icon: Swords, label: 'Arena' },
-  { href: '/bestiary', icon: Skull, label: 'Bestiário' },
   { href: '/leaderboard', icon: Medal, label: 'Ranking' },
   { href: '/progression', icon: BrainCircuit, label: 'Progressão' },
   { href: '/community', icon: Users, label: 'Comunidade' },
@@ -34,9 +35,32 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const sidebarRef = useRef<HTMLElement>(null)
+  const navRef = useRef<HTMLElement>(null)
+
+  // Entrance animation on mount
+  useEffect(() => {
+    if (!sidebarRef.current) return
+    gsap.fromTo(
+      sidebarRef.current,
+      { x: -80, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.7, ease: EASE_OUT_EXPO, delay: 0.05 }
+    )
+  }, [])
+
+  // Stagger nav items on mount
+  useEffect(() => {
+    if (!navRef.current) return
+    const items = navRef.current.querySelectorAll('a')
+    gsap.fromTo(
+      items,
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, stagger: 0.025, ease: EASE_OUT_EXPO, delay: 0.3 }
+    )
+  }, [])
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0a0a16] border-r border-indigo-500/10 fixed left-0 top-0 bottom-0 z-30">
+    <aside ref={sidebarRef} className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0a0a16] border-r border-indigo-500/10 fixed left-0 top-0 bottom-0 z-30" style={{ opacity: 0 }}>
       {/* Logo */}
       <div className="p-4 border-b border-indigo-500/10">
         <div className="flex items-center gap-3">
@@ -68,7 +92,7 @@ export function Sidebar() {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav ref={navRef} className="flex-1 p-4 space-y-0.5 overflow-y-auto">
         {navItems.map(item => {
           const Icon = item.icon
           const active = pathname === item.href
@@ -76,15 +100,35 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 group ${
                 active
-                  ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  ? 'text-indigo-300'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/4'
               }`}
+              style={active ? { background: 'linear-gradient(90deg,rgba(139,92,246,0.14),rgba(99,102,241,0.06))' } : undefined}
+              onMouseEnter={e => {
+                if (!active) gsap.to(e.currentTarget, { x: 3, duration: 0.18, ease: 'power2.out' })
+              }}
+              onMouseLeave={e => {
+                if (!active) gsap.to(e.currentTarget, { x: 0, duration: 0.2, ease: 'power2.out' })
+              }}
             >
+              {/* Active left bar */}
+              {active && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-indigo-400" style={{ boxShadow: '0 0 8px #a855f7' }} />
+              )}
               <Icon size={17} className={active ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'} />
               {item.label}
-              {active && <ChevronRight size={14} className="ml-auto text-indigo-400" />}
+              {active && (
+                <>
+                  <ChevronRight size={14} className="ml-auto text-indigo-400/70" />
+                  {/* Pulsing dot */}
+                  <span className="relative ml-0 flex h-1.5 w-1.5 shrink-0">
+                    <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                  </span>
+                </>
+              )}
             </Link>
           )
         })}
