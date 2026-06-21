@@ -15,12 +15,12 @@ export interface Rank {
 }
 
 export const RANKS: Rank[] = [
-  { tier: 'E', label: 'Patente E', color: '#94a3b8', min: 0, attrRequirements: {} },
-  { tier: 'D', label: 'Patente D', color: '#22c55e', min: 30, attrRequirements: { discipline: 10 } },
-  { tier: 'C', label: 'Patente C', color: '#3b82f6', min: 90, attrRequirements: { discipline: 25, intelligence: 15 } },
-  { tier: 'B', label: 'Patente B', color: '#8b5cf6', min: 200, attrRequirements: { discipline: 50, strength: 20, intelligence: 30 } },
-  { tier: 'A', label: 'Patente A', color: '#f59e0b', min: 400, attrRequirements: { discipline: 90, strength: 45, intelligence: 55, vitality: 35 } },
-  { tier: 'S', label: 'Patente S', color: '#ec4899', min: 750, attrRequirements: { discipline: 150, strength: 80, intelligence: 90, vitality: 65, focus: 50 } },
+  { tier: 'E', label: 'Patente E', color: '#94a3b8', min: 0,    attrRequirements: {} },
+  { tier: 'D', label: 'Patente D', color: '#22c55e', min: 150,  attrRequirements: { discipline: 15 } },
+  { tier: 'C', label: 'Patente C', color: '#3b82f6', min: 500,  attrRequirements: { discipline: 35, intelligence: 20 } },
+  { tier: 'B', label: 'Patente B', color: '#8b5cf6', min: 1200, attrRequirements: { discipline: 70, strength: 30, intelligence: 45 } },
+  { tier: 'A', label: 'Patente A', color: '#f59e0b', min: 2800, attrRequirements: { discipline: 120, strength: 60, intelligence: 75, vitality: 45 } },
+  { tier: 'S', label: 'Patente S', color: '#ec4899', min: 6000, attrRequirements: { discipline: 200, strength: 100, intelligence: 120, vitality: 80, focus: 60 } },
 ]
 
 /** Maior patente cujo limite mínimo o jogador já alcançou. */

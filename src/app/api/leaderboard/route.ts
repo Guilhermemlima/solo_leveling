@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { getRank, nextRank, rankProgress } from '@/lib/ranks'
 import { currentSeason, SEASON_REWARDS } from '@/lib/seasons'
+import { NPC_PLAYERS } from '@/lib/arena'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -30,32 +31,46 @@ export async function GET() {
     }),
   ])
 
-  const entries = users.map((u, i) => {
-    const rank = getRank(u.arenaPoints)
-    return {
-      position: i + 1,
-      name: u.name,
-      level: u.level,
-      avatarUrl: u.avatarUrl,
-      points: u.arenaPoints,
-      wins: u.arenaWins,
-      losses: u.arenaLosses,
-      rankTier: rank.tier,
-      selectedClass: u.selectedClass,
-      isMe: u.id === auth.userId,
-    }
-  })
+  const realEntries = users.map(u => ({
+    name: u.name,
+    level: u.level,
+    avatarUrl: u.avatarUrl ?? null,
+    points: u.arenaPoints,
+    wins: u.arenaWins,
+    losses: u.arenaLosses,
+    rankTier: getRank(u.arenaPoints).tier,
+    selectedClass: u.selectedClass,
+    isMe: u.id === auth.userId,
+    isNpc: false,
+  }))
 
-  const meIndex = entries.findIndex(e => e.isMe)
-  const mePoints = meIndex >= 0 ? entries[meIndex].points : 0
+  const npcEntries = NPC_PLAYERS.map(npc => ({
+    name: npc.name,
+    level: npc.level,
+    avatarUrl: null,
+    points: npc.arenaPoints,
+    wins: npc.wins,
+    losses: npc.losses,
+    rankTier: npc.rankTier,
+    selectedClass: { name: 'Caçador', icon: npc.icon, color: '#64748b' },
+    isMe: false,
+    isNpc: true,
+  }))
+
+  const combined = [...realEntries, ...npcEntries]
+    .sort((a, b) => b.points - a.points)
+    .map((e, i) => ({ ...e, position: i + 1 }))
+
+  const meIndex = combined.findIndex(e => e.isMe)
+  const mePoints = meIndex >= 0 ? combined[meIndex].points : 0
   const next = nextRank(mePoints)
 
   return NextResponse.json({
-    leaderboard: entries.slice(0, 50),
+    leaderboard: combined.slice(0, 50),
     me: meIndex >= 0
       ? {
-          position: entries[meIndex].position,
-          total: entries.length,
+          position: combined[meIndex].position,
+          total: combined.length,
           points: mePoints,
           rankTier: getRank(mePoints).tier,
           nextRankTier: next?.tier ?? null,

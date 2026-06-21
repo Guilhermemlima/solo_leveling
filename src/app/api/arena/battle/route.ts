@@ -10,6 +10,7 @@ import { computeCharges, MAX_CHARGES, CHARGE_MS } from '@/lib/arena'
 import {
   simulateBattle, makeBot, battleRewards, computeEquipBonuses, type Attributes, type Combatant, type BotDifficulty,
 } from '@/lib/battle'
+import { NPC_PLAYERS, type NpcDifficulty } from '@/lib/arena'
 
 async function buildCombatant(userId: string): Promise<Combatant | null> {
   const user = await prisma.user.findUnique({
@@ -70,13 +71,17 @@ export async function POST(req: NextRequest) {
   let battleType: 'BOT' | 'PLAYER'
   let difficulty: BotDifficulty | undefined
 
-  if (body.type === 'PLAYER') {
+  if (body.type === 'NPC') {
+    const npc = NPC_PLAYERS.find(n => n.id === body.npcId)
+    if (!npc) return NextResponse.json({ error: 'NPC não encontrado' }, { status: 400 })
+    const VALID_NPC_DIFFS: NpcDifficulty[] = ['EASY', 'MEDIUM', 'HARD', 'ELITE', 'CHAMPION', 'LEGENDARY', 'NIGHTMARE']
+    difficulty = (VALID_NPC_DIFFS.includes(npc.botDifficulty) ? npc.botDifficulty : 'MEDIUM') as BotDifficulty
+    const bot = makeBot(user.level, difficulty)
+    opponent = { ...bot, name: npc.name, icon: npc.icon, level: npc.level }
+    battleType = 'PLAYER' // recompensas como jogador real
+  } else if (body.type === 'PLAYER') {
     if (!body.opponentId || body.opponentId === auth.userId)
       return NextResponse.json({ error: 'Oponente inválido' }, { status: 400 })
-    const target = await prisma.user.findFirst({
-      where: { id: body.opponentId, level: { gte: Math.max(1, user.level - 3), lte: user.level + 3 } },
-    })
-    if (!target) return NextResponse.json({ error: 'Oponente fora da faixa de nível' }, { status: 400 })
     const built = await buildCombatant(body.opponentId)
     if (!built) return NextResponse.json({ error: 'Oponente não encontrado' }, { status: 404 })
     opponent = built; battleType = 'PLAYER'

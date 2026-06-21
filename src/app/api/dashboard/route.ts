@@ -5,12 +5,20 @@ import { xpForLevel } from '@/lib/game-logic'
 import { syncUserDaily } from '@/lib/daily-sync'
 import { computeEquipBonuses, deriveStats, type Attributes, type Combatant } from '@/lib/battle'
 
+// Throttle syncUserDaily: max once every 5 min per user
+const syncCache = new Map<string, number>()
+
 export async function GET() {
   const auth = await getAuthUser()
   if (!auth) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   // Reabre recorrências, reinicia missões do período e ajusta o streak
-  await syncUserDaily(auth.userId)
+  const now = Date.now()
+  const lastSync = syncCache.get(auth.userId) ?? 0
+  if (now - lastSync > 5 * 60 * 1000) {
+    syncCache.set(auth.userId, now)
+    await syncUserDaily(auth.userId)
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)

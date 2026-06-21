@@ -47,18 +47,11 @@ export default function CaktoCheckoutButton({
   const key: PlanoKey = planType ?? plano ?? "mensal";
   const url = getCheckoutUrl(key);
   const isConfigured = url.startsWith("http");
-  const href = isConfigured ? url : "#";
+  const href = isConfigured ? url : "/register";
   const btnLabel = label ?? PLAN_LABELS[key];
 
-  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    if (!isConfigured) {
-      e.preventDefault();
-      console.warn(
-        `[Ascend] Checkout não configurado para o plano "${key}". ` +
-        `Configure NEXT_PUBLIC_CAKTO_CHECKOUT_${key.toUpperCase()} no .env`
-      );
-      return;
-    }
+  function handleClick() {
+    if (!isConfigured) return; // let href=/register handle navigation
 
     try {
       window.dispatchEvent(new CustomEvent("ascend:checkout_click", {
@@ -83,8 +76,7 @@ export default function CaktoCheckoutButton({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       onClick={handleClick}
-      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${VARIANT_STYLES[variant]} ${className} ${!isConfigured ? "opacity-70" : ""}`}
-      title={!isConfigured ? "Configure o link de checkout no .env" : undefined}
+      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${VARIANT_STYLES[variant]} ${className}`}
     >
       <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

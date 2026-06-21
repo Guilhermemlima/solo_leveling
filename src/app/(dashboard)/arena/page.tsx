@@ -516,7 +516,9 @@ export default function ArenaPage() {
     try {
       const body = opponent.type === 'BOT'
         ? { type: 'BOT', difficulty: opponent.difficulty }
-        : { type: 'PLAYER', opponentId: opponent.id.replace('player:', '') }
+        : opponent.type === 'NPC'
+          ? { type: 'NPC', npcId: opponent.id }
+          : { type: 'PLAYER', opponentId: opponent.id.replace('player:', '') }
       const res = await fetch('/api/arena/battle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },

@@ -302,6 +302,21 @@ export default function LandingPage() {
   return (
     <main className="bg-slate-950 text-white overflow-x-hidden">
 
+      {/* ── TOP NAVBAR ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60">
+        <span className="font-black tracking-tight text-lg bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+          ASCEND
+        </span>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="px-4 py-1.5 text-sm font-medium text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-slate-800/60">
+            Entrar
+          </Link>
+          <Link href="/register" className="px-4 py-1.5 text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors">
+            Criar Conta
+          </Link>
+        </div>
+      </nav>
+
       {/* ── STICKY CTA (mobile only, after hero) ── */}
       <AnimatePresence>
         {showSticky && (
@@ -327,7 +342,7 @@ export default function LandingPage() {
       <section
         ref={heroRef}
         id="inicio"
-        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden"
+        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-16 overflow-hidden"
       >
         <HeroVideoBackground videoMp4="/videos/ascend-hero-bg.mp4" poster="/videos/hero-poster.svg" />
         <AnimatedBackground intensity="medium" transparent={true} className="z-[2] opacity-60" />
