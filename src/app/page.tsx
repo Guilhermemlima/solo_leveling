@@ -308,11 +308,11 @@ export default function LandingPage() {
           ASCEND
         </span>
         <div className="flex items-center gap-2">
-          <Link href="/login" className="px-4 py-1.5 text-sm font-medium text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-slate-800/60">
+          <a href="#planos" className="px-4 py-1.5 text-sm font-medium text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-slate-800/60">
+            Planos
+          </a>
+          <Link href="/login" className="px-4 py-1.5 text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors">
             Entrar
-          </Link>
-          <Link href="/register" className="px-4 py-1.5 text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors">
-            Criar Conta
           </Link>
         </div>
       </nav>
@@ -369,12 +369,12 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <div data-hero-btn className="w-full sm:w-auto">
-              <CaktoCheckoutButton
-                plano="anual"
-                label="Iniciar minha ascensão"
-                variant="primary"
-                className="text-base px-8 py-4 w-full sm:w-auto"
-              />
+              <a
+                href="#planos"
+                className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 rounded-xl font-semibold text-base transition-all duration-200 bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white shadow-lg shadow-violet-500/30"
+              >
+                ⚡ Iniciar minha ascensão
+              </a>
             </div>
             <div data-hero-btn className="w-full sm:w-auto">
               <a

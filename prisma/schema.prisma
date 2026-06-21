@@ -554,3 +554,16 @@ enum Rarity {
   LEGENDARY
   MYTHIC
 }
+
+model PendingMember {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  planKey   String
+  token     String   @unique @default(cuid())
+  orderId   String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("pending_members")
+}
