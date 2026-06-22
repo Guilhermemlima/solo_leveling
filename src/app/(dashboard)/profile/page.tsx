@@ -1,12 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
-import { Heart, Swords, Shield, Zap } from 'lucide-react'
+import { Heart, Swords, Shield, Zap, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { XPBar } from '@/components/game/XPBar'
 import { RankBadge } from '@/components/game/RankBadge'
 import { TitleBadge } from '@/components/game/TitleBadge'
 import { EvolutionAvatar } from '@/components/game/EvolutionAvatar'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/Toast'
 import { xpForLevel, CATEGORY_LABELS } from '@/lib/game-logic'
 import { getRank } from '@/lib/ranks'
 
@@ -215,6 +218,85 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Segurança — Trocar senha */}
+      <ChangePasswordCard />
+    </div>
+  )
+}
+
+function ChangePasswordCard() {
+  const [form, setForm] = useState({ current: '', next: '', confirm: '' })
+  const [saving, setSaving] = useState(false)
+  const { toast } = useToast()
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (form.next !== form.confirm) { toast('A confirmação não confere', 'error'); return }
+    if (form.next.length < 8 || !/\d/.test(form.next)) {
+      toast('A nova senha deve ter ao menos 8 caracteres e 1 número', 'error'); return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/user/password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: form.current, newPassword: form.next }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        toast('Senha alterada com sucesso!', 'success')
+        setForm({ current: '', next: '', confirm: '' })
+      } else {
+        toast(data.error ?? 'Não foi possível alterar a senha', 'error')
+      }
+    } catch {
+      toast('Erro ao alterar a senha', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="glass neon-border rounded-2xl p-5">
+      <h3 className="font-semibold text-slate-200 mb-1 flex items-center gap-2">
+        <Lock size={17} className="text-indigo-400" /> Segurança
+      </h3>
+      <p className="text-xs text-slate-500 mb-4">Altere sua senha de acesso. Você continuará logado após a troca.</p>
+      <form onSubmit={submit} className="space-y-3 max-w-md">
+        <Input
+          label="Senha atual"
+          type="password"
+          placeholder="Sua senha atual"
+          value={form.current}
+          onChange={e => setForm({ ...form, current: e.target.value })}
+          icon={<Lock size={16} />}
+          autoComplete="current-password"
+          required
+        />
+        <Input
+          label="Nova senha"
+          type="password"
+          placeholder="Mínimo 8 caracteres com 1 número"
+          value={form.next}
+          onChange={e => setForm({ ...form, next: e.target.value })}
+          icon={<Lock size={16} />}
+          autoComplete="new-password"
+          required
+        />
+        <Input
+          label="Confirmar nova senha"
+          type="password"
+          placeholder="Repita a nova senha"
+          value={form.confirm}
+          onChange={e => setForm({ ...form, confirm: e.target.value })}
+          icon={<Lock size={16} />}
+          autoComplete="new-password"
+          required
+        />
+        <Button type="submit" variant="primary" loading={saving}>
+          Alterar senha
+        </Button>
+      </form>
     </div>
   )
 }
