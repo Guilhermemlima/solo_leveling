@@ -11,27 +11,55 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { gsap, EASE_OUT_EXPO } from '@/lib/gsap-init'
 
-const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
-  { href: '/routines', icon: Layers3, label: 'Rotinas' },
-  { href: '/missions', icon: Target, label: 'Missões' },
-  { href: '/finance', icon: Wallet, label: 'Finanças' },
-  { href: '/fitness', icon: Dumbbell, label: 'Academia' },
-  { href: '/arena', icon: Swords, label: 'Arena' },
-  { href: '/leaderboard', icon: Medal, label: 'Ranking' },
-  { href: '/progression', icon: BrainCircuit, label: 'Progressão' },
-  { href: '/community', icon: Users, label: 'Comunidade' },
-  { href: '/profile', icon: User, label: 'Perfil' },
-  { href: '/chests', icon: Gift, label: 'Caixas' },
-  { href: '/inventory', icon: Package, label: 'Inventário' },
-  { href: '/forge', icon: Hammer, label: 'Forja' },
-  { href: '/shop', icon: ShoppingBag, label: 'Loja' },
-  { href: '/achievements', icon: Trophy, label: 'Conquistas' },
-  { href: '/history', icon: Clock, label: 'Histórico' },
-  { href: '/reports', icon: BarChart3, label: 'Relatórios' },
-  { href: '/support', icon: MessageCircle, label: 'Suporte' },
-  { href: '/settings', icon: Settings, label: 'Configurações' },
+const navGroups = [
+  {
+    label: null,
+    items: [{ href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }],
+  },
+  {
+    label: 'Evolução',
+    items: [
+      { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
+      { href: '/routines', icon: Layers3, label: 'Rotinas' },
+      { href: '/missions', icon: Target, label: 'Missões' },
+      { href: '/progression', icon: BrainCircuit, label: 'Progressão' },
+    ],
+  },
+  {
+    label: 'Vida Real',
+    items: [
+      { href: '/finance', icon: Wallet, label: 'Finanças' },
+      { href: '/fitness', icon: Dumbbell, label: 'Academia' },
+    ],
+  },
+  {
+    label: 'Arena',
+    items: [
+      { href: '/arena', icon: Swords, label: 'Arena' },
+      { href: '/leaderboard', icon: Medal, label: 'Ranking' },
+      { href: '/achievements', icon: Trophy, label: 'Conquistas' },
+    ],
+  },
+  {
+    label: 'Itens',
+    items: [
+      { href: '/chests', icon: Gift, label: 'Caixas' },
+      { href: '/inventory', icon: Package, label: 'Inventário' },
+      { href: '/forge', icon: Hammer, label: 'Forja' },
+      { href: '/shop', icon: ShoppingBag, label: 'Loja' },
+    ],
+  },
+  {
+    label: 'Conta',
+    items: [
+      { href: '/profile', icon: User, label: 'Perfil' },
+      { href: '/community', icon: Users, label: 'Comunidade' },
+      { href: '/history', icon: Clock, label: 'Histórico' },
+      { href: '/reports', icon: BarChart3, label: 'Relatórios' },
+      { href: '/support', icon: MessageCircle, label: 'Suporte' },
+      { href: '/settings', icon: Settings, label: 'Configurações' },
+    ],
+  },
 ]
 
 export function Sidebar() {
@@ -94,46 +122,57 @@ export function Sidebar() {
       )}
 
       {/* Nav */}
-      <nav ref={navRef} className="flex-1 p-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(item => {
-          const Icon = item.icon
-          const active = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 group ${
-                active
-                  ? 'text-indigo-300'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/4'
-              }`}
-              style={active ? { background: 'linear-gradient(90deg,rgba(139,92,246,0.14),rgba(99,102,241,0.06))' } : undefined}
-              onMouseEnter={e => {
-                if (!active) gsap.to(e.currentTarget, { x: 3, duration: 0.18, ease: 'power2.out' })
-              }}
-              onMouseLeave={e => {
-                if (!active) gsap.to(e.currentTarget, { x: 0, duration: 0.2, ease: 'power2.out' })
-              }}
-            >
-              {/* Active left bar */}
-              {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-indigo-400" style={{ boxShadow: '0 0 8px #a855f7' }} />
-              )}
-              <Icon size={17} className={active ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'} />
-              {item.label}
-              {active && (
-                <>
-                  <ChevronRight size={14} className="ml-auto text-indigo-400/70" />
-                  {/* Pulsing dot */}
-                  <span className="relative ml-0 flex h-1.5 w-1.5 shrink-0">
-                    <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-60" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                  </span>
-                </>
-              )}
-            </Link>
-          )
-        })}
+      <nav ref={navRef} className="flex-1 p-4 overflow-y-auto">
+        {navGroups.map((group, gi) => (
+          <div key={group.label ?? `g${gi}`} className={gi > 0 ? 'mt-4' : ''}>
+            {group.label && (
+              <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
+                {group.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(item => {
+                const Icon = item.icon
+                const active = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 group ${
+                      active
+                        ? 'text-indigo-300'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/4'
+                    }`}
+                    style={active ? { background: 'linear-gradient(90deg,rgba(139,92,246,0.14),rgba(99,102,241,0.06))' } : undefined}
+                    onMouseEnter={e => {
+                      if (!active) gsap.to(e.currentTarget, { x: 3, duration: 0.18, ease: 'power2.out' })
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) gsap.to(e.currentTarget, { x: 0, duration: 0.2, ease: 'power2.out' })
+                    }}
+                  >
+                    {/* Active left bar */}
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-indigo-400" style={{ boxShadow: '0 0 8px #a855f7' }} />
+                    )}
+                    <Icon size={17} className={active ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'} />
+                    {item.label}
+                    {active && (
+                      <>
+                        <ChevronRight size={14} className="ml-auto text-indigo-400/70" />
+                        {/* Pulsing dot */}
+                        <span className="relative ml-0 flex h-1.5 w-1.5 shrink-0">
+                          <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-60" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Logout */}
