@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Mail, Lock, User, Loader2 } from 'lucide-react'
@@ -14,7 +14,7 @@ const PLAN_LABELS: Record<string, string> = {
   vitalicio: 'Plano Fundador',
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [validating, setValidating] = useState(true)
@@ -32,7 +32,6 @@ export default function RegisterPage() {
     const e = params.get('email')
 
     if (!t) {
-      // Sem token → redireciona para a landing page na seção de planos
       router.replace('/#planos')
       return
     }
@@ -40,7 +39,6 @@ export default function RegisterPage() {
     setToken(t)
     if (e) setForm(f => ({ ...f, email: decodeURIComponent(e) }))
 
-    // Valida o token com o backend
     fetch(`/api/auth/verify-invite?token=${t}`)
       .then(r => r.json())
       .then(data => {
@@ -178,5 +176,18 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-md relative z-10 flex flex-col items-center justify-center gap-4 py-20">
+        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+        <p className="text-slate-400 text-sm">Carregando...</p>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }
