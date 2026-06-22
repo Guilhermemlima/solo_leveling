@@ -71,6 +71,36 @@ export async function GET() {
 
   if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
 
+  // ── Resumo leve dos módulos de Finanças e Academia ──
+  const monthStart = new Date(today)
+  monthStart.setDate(1)
+  const [finTotal, finMonth, finGoal, latestWeight, fitGoal, weekWorkouts] = await Promise.all([
+    prisma.financialContribution.aggregate({ where: { userId: auth.userId }, _sum: { amount: true } }),
+    prisma.financialContribution.aggregate({ where: { userId: auth.userId, date: { gte: monthStart } }, _sum: { amount: true } }),
+    prisma.financialGoal.findFirst({ where: { userId: auth.userId, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' } }),
+    prisma.bodyMeasurement.findFirst({ where: { userId: auth.userId, weight: { not: null } }, orderBy: { date: 'desc' }, select: { weight: true } }),
+    prisma.fitnessGoal.findFirst({ where: { userId: auth.userId, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' } }),
+    prisma.workoutLog.findMany({ where: { userId: auth.userId, date: { gte: weekStart } }, select: { date: true } }),
+  ])
+  const financeSummary = {
+    totalInvested: finTotal._sum.amount ?? 0,
+    monthInvested: finMonth._sum.amount ?? 0,
+    mainGoal: finGoal
+      ? { name: finGoal.name, current: finGoal.currentAmount, target: finGoal.targetAmount,
+          progress: finGoal.targetAmount > 0 ? Math.min(100, Math.round((finGoal.currentAmount / finGoal.targetAmount) * 100)) : 0 }
+      : null,
+  }
+  const fitnessSummary = {
+    latestWeight: latestWeight?.weight ?? null,
+    trainedThisWeek: new Set(weekWorkouts.map(w => new Date(w.date).toDateString())).size,
+    mainGoal: fitGoal
+      ? { name: fitGoal.name, current: fitGoal.currentValue, target: fitGoal.targetValue, unit: fitGoal.unit,
+          progress: fitGoal.targetValue !== fitGoal.startValue
+            ? Math.max(0, Math.min(100, Math.round(((fitGoal.currentValue - fitGoal.startValue) / (fitGoal.targetValue - fitGoal.startValue)) * 100)))
+            : 0 }
+      : null,
+  }
+
   const equipBonuses = computeEquipBonuses(
     equippedItems.map(i => ({ ...i.equipment, upgradeLevel: i.upgradeLevel }))
   )
@@ -89,5 +119,7 @@ export async function GET() {
     recentActivity,
     weeklyCompleted: weeklyStats.length,
     combatStats,
+    financeSummary,
+    fitnessSummary,
   })
 }

@@ -58,6 +58,13 @@ model User {
   userChests         UserChest[]
   chestOpenings      ChestOpeningLog[]
   forgeLogs          ForgeLog[]
+  financialGoals     FinancialGoal[]
+  contributions      FinancialContribution[]
+  simulations        InvestmentSimulation[]
+  fitnessGoals       FitnessGoal[]
+  bodyMeasurements   BodyMeasurement[]
+  exercises          Exercise[]
+  workoutLogs        WorkoutLog[]
 
   @@map("users")
 }
@@ -566,4 +573,151 @@ model PendingMember {
   expiresAt DateTime
 
   @@map("pending_members")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MÓDULO DE FINANÇAS
+// ─────────────────────────────────────────────────────────────
+
+model FinancialGoal {
+  id                  String   @id @default(cuid())
+  userId              String
+  name                String
+  targetAmount        Float    @default(0)
+  currentAmount       Float    @default(0)
+  monthlyContribution Float    @default(0)
+  category            String   @default("INVESTMENT") // INVESTMENT | EMERGENCY | RETIREMENT | GOAL | CUSTOM
+  status              String   @default("ACTIVE") // ACTIVE | COMPLETED | PAUSED
+  startDate           DateTime @default(now())
+  targetDate          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions FinancialContribution[]
+
+  @@index([userId])
+  @@map("financial_goals")
+}
+
+model FinancialContribution {
+  id        String   @id @default(cuid())
+  userId    String
+  goalId    String?
+  amount    Float
+  assetType String?  // chave do ativo simulado (ex.: TESOURO_SELIC)
+  source    String?  // origem do dinheiro (opcional)
+  notes     String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal FinancialGoal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([goalId])
+  @@map("financial_contributions")
+}
+
+model InvestmentSimulation {
+  id                  String   @id @default(cuid())
+  userId              String
+  initialAmount       Float    @default(0)
+  monthlyContribution Float    @default(0)
+  annualRate          Float    @default(0)
+  durationMonths      Int      @default(0)
+  totalContributed    Float    @default(0)
+  estimatedReturn     Float    @default(0)
+  finalAmount         Float    @default(0)
+  assetType           String?
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("investment_simulations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MÓDULO DE ACADEMIA / FITNESS
+// ─────────────────────────────────────────────────────────────
+
+model FitnessGoal {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String
+  type         String    @default("WEIGHT") // WEIGHT | LOAD | REPS | DISTANCE | TIME | FREQUENCY | MEASURE
+  currentValue Float     @default(0)
+  startValue   Float     @default(0)
+  targetValue  Float     @default(0)
+  unit         String    @default("kg") // kg | reps | km | min | dias | cm
+  status       String    @default("ACTIVE") // ACTIVE | COMPLETED | PAUSED
+  deadline     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("fitness_goals")
+}
+
+model BodyMeasurement {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float?
+  waist     Float?
+  chest     Float?
+  arm       Float?
+  leg       Float?
+  hip       Float?
+  bodyFat   Float?
+  notes     String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("body_measurements")
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  muscleGroup String?  // PEITO | COSTAS | PERNA | OMBRO | BRACO | CORE | CARDIO | OUTRO
+  type        String   @default("STRENGTH") // STRENGTH | BODYWEIGHT | CARDIO
+  unit        String   @default("kg")
+  createdAt   DateTime @default(now())
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workouts WorkoutLog[]
+
+  @@index([userId])
+  @@map("exercises")
+}
+
+model WorkoutLog {
+  id         String   @id @default(cuid())
+  userId     String
+  exerciseId String?
+  activity   String?  // para atividades livres sem exercício cadastrado
+  weight     Float?
+  reps       Int?
+  sets       Int?
+  distance   Float?   // km
+  duration   Int?     // minutos
+  calories   Int?
+  intensity  String?  // LEVE | MODERADA | INTENSA
+  notes      String?
+  date       DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise? @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([exerciseId])
+  @@map("workout_logs")
 }

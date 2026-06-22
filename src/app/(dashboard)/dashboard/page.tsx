@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target, Heart, Shield, Swords, FlaskConical } from 'lucide-react'
+import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target, Heart, Shield, Swords, FlaskConical, Wallet, Dumbbell, Scale } from 'lucide-react'
 import { XPBar } from '@/components/game/XPBar'
 import { RewardModal } from '@/components/game/RewardModal'
 import { RankBadge } from '@/components/game/RankBadge'
@@ -17,6 +17,14 @@ interface DashboardData {
   recentActivity: any[]
   weeklyCompleted: number
   combatStats: { hp: number; atk: number; def: number; crit: number; power: number } | null
+  financeSummary?: {
+    totalInvested: number; monthInvested: number
+    mainGoal: { name: string; current: number; target: number; progress: number } | null
+  }
+  fitnessSummary?: {
+    latestWeight: number | null; trainedThisWeek: number
+    mainGoal: { name: string; current: number; target: number; unit: string; progress: number } | null
+  }
 }
 
 export default function DashboardPage() {
@@ -150,6 +158,67 @@ export default function DashboardPage() {
             <span className="text-xs text-indigo-400">{data?.weeklyCompleted || 0} tarefas esta semana</span>
           </div>
           <XPBar currentXp={u?.currentXp || 0} xpForNextLevel={u?.xpForNextLevel || 100} level={u?.level || 1} />
+        </div>
+
+        {/* Evolução: Finanças + Academia */}
+        <div data-gsap className="grid sm:grid-cols-2 gap-4">
+          {/* Finanças */}
+          <button onClick={() => router.push('/finance')}
+            className="glass neon-border rounded-2xl p-5 text-left hover:border-emerald-500/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold text-slate-200 flex items-center gap-2"><Wallet size={17} className="text-emerald-400" /> Finanças</span>
+              <span className="text-xs text-slate-500">Ver →</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-emerald-400">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.financeSummary?.totalInvested ?? 0)}
+              </span>
+              <span className="text-xs text-slate-500">investido</span>
+            </div>
+            {data?.financeSummary?.mainGoal ? (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span className="truncate">{data.financeSummary.mainGoal.name}</span>
+                  <span>{data.financeSummary.mainGoal.progress}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${data.financeSummary.mainGoal.progress}%` }} />
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 mt-3">+{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.financeSummary?.monthInvested ?? 0)} este mês</p>
+            )}
+          </button>
+
+          {/* Academia */}
+          <button onClick={() => router.push('/fitness')}
+            className="glass neon-border rounded-2xl p-5 text-left hover:border-orange-500/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold text-slate-200 flex items-center gap-2"><Dumbbell size={17} className="text-orange-400" /> Academia</span>
+              <span className="text-xs text-slate-500">Ver →</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-baseline gap-1.5">
+                <Scale size={15} className="text-slate-500" />
+                <span className="text-xl font-bold text-orange-400">{data?.fitnessSummary?.latestWeight != null ? `${data.fitnessSummary.latestWeight}kg` : '—'}</span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <Flame size={15} className="text-slate-500" />
+                <span className="text-sm font-semibold text-slate-300">{data?.fitnessSummary?.trainedThisWeek ?? 0} treinos/sem</span>
+              </div>
+            </div>
+            {data?.fitnessSummary?.mainGoal && (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span className="truncate">{data.fitnessSummary.mainGoal.name}</span>
+                  <span>{data.fitnessSummary.mainGoal.progress}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400" style={{ width: `${data.fitnessSummary.mainGoal.progress}%` }} />
+                </div>
+              </div>
+            )}
+          </button>
         </div>
 
         {/* Today Tasks + Active Missions */}

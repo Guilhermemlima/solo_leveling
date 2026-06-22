@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react'
 import {
   LayoutDashboard, CheckSquare, Target, User, Package, ShoppingBag,
   Trophy, Clock, BarChart3, Settings, LogOut, ChevronRight, Swords, Medal,
-  Layers3, BrainCircuit, Users, MessageCircle, Gift, Hammer
+  Layers3, BrainCircuit, Users, MessageCircle, Gift, Hammer, Wallet, Dumbbell
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { gsap, EASE_OUT_EXPO } from '@/lib/gsap-init'
@@ -16,6 +16,8 @@ const navItems = [
   { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
   { href: '/routines', icon: Layers3, label: 'Rotinas' },
   { href: '/missions', icon: Target, label: 'Missões' },
+  { href: '/finance', icon: Wallet, label: 'Finanças' },
+  { href: '/fitness', icon: Dumbbell, label: 'Academia' },
   { href: '/arena', icon: Swords, label: 'Arena' },
   { href: '/leaderboard', icon: Medal, label: 'Ranking' },
   { href: '/progression', icon: BrainCircuit, label: 'Progressão' },

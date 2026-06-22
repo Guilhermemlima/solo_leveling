@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CheckSquare, Swords, Target, Gift,
   Package, ShoppingBag, Trophy, Clock, BarChart3, Settings,
-  Menu, X, Medal, LogOut, Layers3,
+  Menu, X, Medal, LogOut, Layers3, Wallet, Dumbbell,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -17,6 +17,8 @@ const primaryItems = [
 ]
 
 const moreItems = [
+  { href: '/finance', icon: Wallet, label: 'Finanças' },
+  { href: '/fitness', icon: Dumbbell, label: 'Academia' },
   { href: '/routines', icon: Layers3, label: 'Rotinas' },
   { href: '/chests', icon: Gift, label: 'Caixas' },
   { href: '/inventory', icon: Package, label: 'Inventário' },
