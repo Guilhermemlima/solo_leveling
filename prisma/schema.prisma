@@ -39,6 +39,13 @@ model User {
   lastBattleAt         DateTime?
   arenaCharges         Int       @default(5)
   arenaNextChargeAt    DateTime?
+  // Pagamento / plano (Cakto)
+  plan                 String?
+  paymentStatus        String?   // APPROVED | etc.
+  caktoTransactionId   String?
+  caktoProductName     String?
+  purchaseDate         DateTime?
+  accessEmailStatus    String?   // pending | sent | failed
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -573,6 +580,25 @@ model PendingMember {
   expiresAt DateTime
 
   @@map("pending_members")
+}
+
+// Idempotência de webhooks de pagamento (evita criar usuário / enviar e-mail duas vezes)
+model ProcessedWebhook {
+  id            String   @id @default(cuid())
+  provider      String   @default("cakto")
+  eventId       String?
+  transactionId String?
+  email         String?
+  status        String   @default("processed") // processed | ignored | error
+  emailStatus   String?  // pending | sent | failed
+  action        String?  // created | updated | duplicate
+  rawPayload    String?  // JSON serializado para auditoria
+  processedAt   DateTime @default(now())
+
+  @@unique([provider, transactionId])
+  @@index([transactionId])
+  @@index([email])
+  @@map("processed_webhooks")
 }
 
 // ─────────────────────────────────────────────────────────────
