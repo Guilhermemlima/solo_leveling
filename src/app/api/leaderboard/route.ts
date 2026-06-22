@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/auth'
 import { getRank, nextRank, rankProgress } from '@/lib/ranks'
 import { currentSeason, SEASON_REWARDS } from '@/lib/seasons'
 import { NPC_PLAYERS } from '@/lib/arena'
+import { getUsersTitles } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -31,6 +32,8 @@ export async function GET() {
     }),
   ])
 
+  const titles = await getUsersTitles(users.map(u => u.id)).catch(() => new Map())
+
   const realEntries = users.map(u => ({
     name: u.name,
     level: u.level,
@@ -40,6 +43,7 @@ export async function GET() {
     losses: u.arenaLosses,
     rankTier: getRank(u.arenaPoints).tier,
     selectedClass: u.selectedClass,
+    title: titles.get(u.id) ?? null,
     isMe: u.id === auth.userId,
     isNpc: false,
   }))
@@ -53,6 +57,7 @@ export async function GET() {
     losses: npc.losses,
     rankTier: npc.rankTier,
     selectedClass: { name: 'Caçador', icon: npc.icon, color: '#64748b' },
+    title: null,
     isMe: false,
     isNpc: true,
   }))

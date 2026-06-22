@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Crown, Trophy, Medal, Swords } from 'lucide-react'
 import { RankBadge } from '@/components/game/RankBadge'
+import { TitleBadge } from '@/components/game/TitleBadge'
 import { RANKS, getRank } from '@/lib/ranks'
 
 export default function LeaderboardPage() {
@@ -107,8 +108,9 @@ export default function LeaderboardPage() {
                   {e.name}
                   {e.isMe && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">você</span>}
                 </p>
-                <p className="text-xs text-slate-500">
-                  Nível {e.level}{e.selectedClass ? ` · ${e.selectedClass.icon} ${e.selectedClass.name}` : ''}
+                <p className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
+                  <span>Nível {e.level}{e.selectedClass ? ` · ${e.selectedClass.icon} ${e.selectedClass.name}` : ''}</span>
+                  {e.title && <TitleBadge title={e.title} size="sm" />}
                 </p>
               </div>
 

@@ -45,6 +45,31 @@ export async function getUserTitle(userId: string): Promise<Title | null> {
   return highestTitle(owned.map(o => o.achievement.name))
 }
 
+/**
+ * Busca o título de maior prestígio de vários usuários de uma vez (batch).
+ * Retorna um mapa userId → Title (apenas para quem possui algum título).
+ */
+export async function getUsersTitles(userIds: string[]): Promise<Map<string, Title>> {
+  const map = new Map<string, Title>()
+  if (userIds.length === 0) return map
+  const titleNames = TITLES.map(t => t.achievement)
+  const owned = await prisma.userAchievement.findMany({
+    where: { userId: { in: userIds }, achievement: { name: { in: titleNames } } },
+    select: { userId: true, achievement: { select: { name: true } } },
+  })
+  const byUser = new Map<string, string[]>()
+  for (const o of owned) {
+    const arr = byUser.get(o.userId) ?? []
+    arr.push(o.achievement.name)
+    byUser.set(o.userId, arr)
+  }
+  for (const [userId, names] of byUser) {
+    const t = highestTitle(names)
+    if (t) map.set(userId, t)
+  }
+  return map
+}
+
 export interface UnlockedAchievement {
   name: string
   description: string
