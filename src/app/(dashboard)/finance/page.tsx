@@ -274,8 +274,12 @@ function GoalModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
       body: JSON.stringify(form),
     })
     setSaving(false)
-    if (res.ok) { toast('Meta criada! +XP', 'success'); onSaved() }
-    else toast((await res.json()).error ?? 'Erro', 'error')
+    const json = await res.json().catch(() => ({}))
+    if (res.ok) {
+      toast('Meta criada! +XP', 'success')
+      json.newAchievements?.forEach((a: { name: string; icon: string }) => toast(`Conquista: ${a.name} ${a.icon}`, 'success'))
+      onSaved()
+    } else toast(json.error ?? 'Erro', 'error')
   }
 
   return (
@@ -310,6 +314,7 @@ function ContributionModal({ goals, onClose, onSaved }: { goals: Goal[]; onClose
     const json = await res.json()
     if (res.ok) {
       toast(json.completionReward ? 'Aporte registrado e meta concluída! 🏆' : 'Aporte registrado! +XP', 'success')
+      json.newAchievements?.forEach((a: { name: string; icon: string }) => toast(`Conquista: ${a.name} ${a.icon}`, 'success'))
       onSaved()
     } else toast(json.error ?? 'Erro', 'error')
   }

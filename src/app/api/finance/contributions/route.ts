@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { parseJson, contributionSchema } from '@/lib/validation'
 import { grantReward } from '@/lib/rewards'
+import { checkFinanceAchievements } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -76,5 +77,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => null)
   }
 
-  return NextResponse.json({ ...result, reward, completionReward }, { status: 201 })
+  const newAchievements = await checkFinanceAchievements(auth.userId).catch(() => [])
+
+  return NextResponse.json({ ...result, reward, completionReward, newAchievements }, { status: 201 })
 }

@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/auth'
 import { parseJson, financialGoalUpdateSchema } from '@/lib/validation'
 import { goalProgress } from '@/lib/finance'
 import { grantReward } from '@/lib/rewards'
+import { checkFinanceAchievements } from '@/lib/achievements'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthUser()
@@ -40,7 +41,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }).catch(() => null)
   }
 
-  return NextResponse.json({ goal: { ...updated, progress: goalProgress(updated.currentAmount, updated.targetAmount) }, reward })
+  const newAchievements = reward ? await checkFinanceAchievements(auth.userId).catch(() => []) : []
+
+  return NextResponse.json({ goal: { ...updated, progress: goalProgress(updated.currentAmount, updated.targetAmount) }, reward, newAchievements })
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

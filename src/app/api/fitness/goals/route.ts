@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/auth'
 import { parseJson, fitnessGoalSchema } from '@/lib/validation'
 import { fitnessGoalProgress } from '@/lib/fitness'
 import { grantReward } from '@/lib/rewards'
+import { checkFitnessAchievements } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -39,5 +40,7 @@ export async function POST(req: NextRequest) {
     dailyCap: 120,
   }).catch(() => null)
 
-  return NextResponse.json({ goal: { ...goal, progress: fitnessGoalProgress(goal.startValue, goal.currentValue, goal.targetValue) }, reward }, { status: 201 })
+  const newAchievements = await checkFitnessAchievements(auth.userId).catch(() => [])
+
+  return NextResponse.json({ goal: { ...goal, progress: fitnessGoalProgress(goal.startValue, goal.currentValue, goal.targetValue) }, reward, newAchievements }, { status: 201 })
 }

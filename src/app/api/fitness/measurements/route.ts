@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { parseJson, measurementSchema } from '@/lib/validation'
 import { grantReward } from '@/lib/rewards'
+import { checkFitnessAchievements } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -44,5 +45,7 @@ export async function POST(req: NextRequest) {
     dailyCap: 120,
   }).catch(() => null)
 
-  return NextResponse.json({ measurement, reward }, { status: 201 })
+  const newAchievements = await checkFitnessAchievements(auth.userId).catch(() => [])
+
+  return NextResponse.json({ measurement, reward, newAchievements }, { status: 201 })
 }

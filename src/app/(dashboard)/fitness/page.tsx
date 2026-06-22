@@ -284,8 +284,12 @@ function GoalModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
       body: JSON.stringify({ ...form, startValue: form.currentValue || 0 }),
     })
     setSaving(false)
-    if (res.ok) { toast('Meta criada! +XP', 'success'); onSaved() }
-    else toast((await res.json()).error ?? 'Erro', 'error')
+    const json = await res.json().catch(() => ({}))
+    if (res.ok) {
+      toast('Meta criada! +XP', 'success')
+      json.newAchievements?.forEach((a: { name: string; icon: string }) => toast(`Conquista: ${a.name} ${a.icon}`, 'success'))
+      onSaved()
+    } else toast(json.error ?? 'Erro', 'error')
   }
 
   return (
@@ -365,8 +369,11 @@ function WorkoutModal({ exercises, onClose, onSaved }: { exercises: ExerciseSumm
     })
     setSaving(false)
     const json = await res.json()
-    if (res.ok) { toast(json.isPR ? 'Novo recorde! 💥 +XP' : 'Treino registrado! +XP', 'success'); onSaved() }
-    else toast(json.error ?? 'Erro', 'error')
+    if (res.ok) {
+      toast(json.isPR ? 'Novo recorde! 💥 +XP' : 'Treino registrado! +XP', 'success')
+      json.newAchievements?.forEach((a: { name: string; icon: string }) => toast(`Conquista: ${a.name} ${a.icon}`, 'success'))
+      onSaved()
+    } else toast(json.error ?? 'Erro', 'error')
   }
 
   return (
@@ -431,8 +438,12 @@ function MeasureModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(filled),
     })
     setSaving(false)
-    if (res.ok) { toast('Medidas registradas! +XP', 'success'); onSaved() }
-    else toast((await res.json()).error ?? 'Erro', 'error')
+    const json = await res.json().catch(() => ({}))
+    if (res.ok) {
+      toast('Medidas registradas! +XP', 'success')
+      json.newAchievements?.forEach((a: { name: string; icon: string }) => toast(`Conquista: ${a.name} ${a.icon}`, 'success'))
+      onSaved()
+    } else toast(json.error ?? 'Erro', 'error')
   }
 
   return (

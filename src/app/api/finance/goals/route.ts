@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/auth'
 import { parseJson, financialGoalSchema } from '@/lib/validation'
 import { goalProgress } from '@/lib/finance'
 import { grantReward } from '@/lib/rewards'
+import { checkFinanceAchievements } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -42,5 +43,7 @@ export async function POST(req: NextRequest) {
     dailyCap: 120,
   }).catch(() => null)
 
-  return NextResponse.json({ goal: { ...goal, progress: goalProgress(goal.currentAmount, goal.targetAmount) }, reward }, { status: 201 })
+  const newAchievements = await checkFinanceAchievements(auth.userId).catch(() => [])
+
+  return NextResponse.json({ goal: { ...goal, progress: goalProgress(goal.currentAmount, goal.targetAmount) }, reward, newAchievements }, { status: 201 })
 }
