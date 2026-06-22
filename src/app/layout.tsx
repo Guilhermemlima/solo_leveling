@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Ascend System — Desperte seu poder',
   description: 'Transforme sua rotina em missões épicas com EXP, ranks e recompensas. RPG de evolução pessoal dark fantasy. Garantia de 7 dias.',
-  icons: { icon: '/logo.png', apple: '/logo.png' },
+  // Ícones via convenção de arquivos: app/icon.png, app/favicon.ico, app/apple-icon.png
   openGraph: {
     title: 'Ascend System — Desperte seu poder',
     description: 'Transforme sua rotina em missões épicas com EXP, ranks e recompensas. Garantia de 7 dias.',
