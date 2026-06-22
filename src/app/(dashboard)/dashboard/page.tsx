@@ -5,6 +5,7 @@ import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target, Heart,
 import { XPBar } from '@/components/game/XPBar'
 import { RewardModal } from '@/components/game/RewardModal'
 import { RankBadge } from '@/components/game/RankBadge'
+import { TitleBadge } from '@/components/game/TitleBadge'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,6 +26,7 @@ interface DashboardData {
     latestWeight: number | null; trainedThisWeek: number
     mainGoal: { name: string; current: number; target: number; unit: string; progress: number } | null
   }
+  title?: { title: string; icon: string; color: string } | null
 }
 
 export default function DashboardPage() {
@@ -91,11 +93,12 @@ export default function DashboardPage() {
         {/* Header */}
         <div data-gsap className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold text-white">
                 Bem-vindo, <span className="text-indigo-400">{u?.name?.split(' ')[0]}</span>
               </h1>
               {u && <RankBadge points={u.arenaPoints || 0} size="sm" />}
+              {data?.title && <TitleBadge title={data.title} size="sm" />}
             </div>
             {u?.selectedClass ? (
               <p className="text-slate-400 text-sm mt-0.5">{u.selectedClass.icon} {u.selectedClass.name}</p>

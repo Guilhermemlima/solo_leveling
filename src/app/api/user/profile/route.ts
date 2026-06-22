@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { computeEquipBonuses, deriveStats, type Attributes } from '@/lib/battle'
+import { getUserTitle } from '@/lib/achievements'
 
 export async function GET() {
   const auth = await getAuthUser()
@@ -42,6 +43,7 @@ export async function GET() {
   return NextResponse.json({
     ...safeUser,
     combatStats,
+    title: await getUserTitle(auth.userId).catch(() => null),
     stats: {
       totalTasksCompleted: totalTasks,
       tasksByCategory,

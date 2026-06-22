@@ -5,6 +5,7 @@ import { Heart, Swords, Shield, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { XPBar } from '@/components/game/XPBar'
 import { RankBadge } from '@/components/game/RankBadge'
+import { TitleBadge } from '@/components/game/TitleBadge'
 import { EvolutionAvatar } from '@/components/game/EvolutionAvatar'
 import { xpForLevel, CATEGORY_LABELS } from '@/lib/game-logic'
 import { getRank } from '@/lib/ranks'
@@ -41,10 +42,15 @@ export default function ProfilePage() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <EvolutionAvatar name={profile.name} avatarUrl={profile.avatarUrl} level={profile.level} />
           <div className="flex-1 text-center sm:text-left">
-            <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
               <h2 className="text-2xl font-bold text-white">{profile.name}</h2>
               <RankBadge points={profile.arenaPoints || 0} size="sm" />
             </div>
+            {profile.title && (
+              <div className="mt-1 flex justify-center sm:justify-start">
+                <TitleBadge title={profile.title} size="md" />
+              </div>
+            )}
             {profile.selectedClass && (
               <p className="text-sm font-medium mt-0.5" style={{ color: profile.selectedClass.color }}>
                 {profile.selectedClass.icon} {profile.selectedClass.name}

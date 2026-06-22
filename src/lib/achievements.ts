@@ -5,6 +5,46 @@ export interface AchievementCheck {
   value: number
 }
 
+/**
+ * Títulos honoríficos derivados de conquistas, em ordem crescente de
+ * prestígio. O título exibido é o de maior prestígio que o usuário possui.
+ */
+export interface Title {
+  achievement: string // nome da conquista que concede o título
+  title: string
+  icon: string
+  color: string
+}
+
+export const TITLES: Title[] = [
+  { achievement: 'Aprendiz Financeiro',    title: 'Aprendiz Financeiro',    icon: '🪙', color: '#22c55e' },
+  { achievement: 'Primeiro Treino',        title: 'Iniciante Físico',       icon: '💪', color: '#f97316' },
+  { achievement: 'Investidor Consistente', title: 'Investidor Consistente', icon: '💹', color: '#3b82f6' },
+  { achievement: 'Discípulo da Força',     title: 'Discípulo da Força',     icon: '🏋️', color: '#3b82f6' },
+  { achievement: 'Guardião da Reserva',    title: 'Guardião da Reserva',    icon: '🛡️', color: '#8b5cf6' },
+  { achievement: 'Atleta em Evolução',     title: 'Atleta em Evolução',     icon: '🔥', color: '#8b5cf6' },
+  { achievement: 'Corpo em Ascensão',      title: 'Corpo em Ascensão',      icon: '🌟', color: '#f59e0b' },
+  { achievement: 'Grande Investidor',      title: 'Grande Investidor',      icon: '🏦', color: '#f59e0b' },
+]
+
+/** Maior título (mais prestigioso) entre os nomes de conquistas desbloqueadas. */
+export function highestTitle(unlockedNames: string[]): Title | null {
+  for (let i = TITLES.length - 1; i >= 0; i--) {
+    if (unlockedNames.includes(TITLES[i].achievement)) return TITLES[i]
+  }
+  return null
+}
+
+/** Busca o título de maior prestígio que o usuário conquistou (ou null). */
+export async function getUserTitle(userId: string): Promise<Title | null> {
+  const titleNames = TITLES.map(t => t.achievement)
+  const owned = await prisma.userAchievement.findMany({
+    where: { userId, achievement: { name: { in: titleNames } } },
+    select: { achievement: { select: { name: true } } },
+  })
+  return highestTitle(owned.map(o => o.achievement.name))
+}
+
 export interface UnlockedAchievement {
   name: string
   description: string

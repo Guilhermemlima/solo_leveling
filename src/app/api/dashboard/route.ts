@@ -4,6 +4,7 @@ import { getAuthUser } from '@/lib/auth'
 import { xpForLevel } from '@/lib/game-logic'
 import { syncUserDaily } from '@/lib/daily-sync'
 import { computeEquipBonuses, deriveStats, type Attributes, type Combatant } from '@/lib/battle'
+import { getUserTitle } from '@/lib/achievements'
 
 // Throttle syncUserDaily: max once every 5 min per user
 const syncCache = new Map<string, number>()
@@ -121,5 +122,6 @@ export async function GET() {
     combatStats,
     financeSummary,
     fitnessSummary,
+    title: await getUserTitle(auth.userId).catch(() => null),
   })
 }
