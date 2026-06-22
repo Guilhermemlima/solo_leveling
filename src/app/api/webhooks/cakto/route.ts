@@ -28,19 +28,41 @@ function resolvePlan(productName: string, offerName?: string, productId?: string
   return 'anual'
 }
 
-// ── Validação de assinatura (se a Cakto fornecer secret) ──
-function verifySignature(rawBody: string, signature: string | null): boolean {
+// Comparação de strings resistente a timing
+function safeEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a)
+  const bb = Buffer.from(b)
+  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb)
+}
+
+/**
+ * Validação tolerante da origem do webhook. Como o esquema exato da Cakto
+ * pode variar, aceita o secret apresentado em qualquer um dos formatos comuns:
+ *   1) token estático em header (x-cakto-signature / x-webhook-signature / authorization)
+ *   2) campo "secret"/"token" dentro do corpo JSON
+ *   3) HMAC-SHA256 do corpo bruto (hex)
+ * Sem CAKTO_WEBHOOK_SECRET configurado, aceita tudo (recomenda-se configurar).
+ */
+function verifyOrigin(rawBody: string, headerSig: string | null, payload: any): boolean {
   const secret = process.env.CAKTO_WEBHOOK_SECRET
-  if (!secret) return true // sem secret configurado, aceita (recomenda-se configurar em produção)
-  if (!signature) return false
-  try {
-    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
-    const a = Buffer.from(signature)
-    const b = Buffer.from(expected)
-    return a.length === b.length && crypto.timingSafeEqual(a, b)
-  } catch {
-    return false
+  if (!secret) return true
+
+  // 1) Token estático em header
+  if (headerSig) {
+    const clean = headerSig.replace(/^Bearer\s+/i, '').trim()
+    if (safeEqual(clean, secret)) return true
   }
+  // 2) Secret/token no corpo
+  const bodySecret = payload?.secret ?? payload?.token ?? payload?.data?.secret ?? payload?.webhook_secret
+  if (typeof bodySecret === 'string' && safeEqual(bodySecret, secret)) return true
+  // 3) HMAC-SHA256 do corpo bruto
+  if (headerSig) {
+    try {
+      const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+      if (safeEqual(headerSig.trim(), expected)) return true
+    } catch { /* ignore */ }
+  }
+  return false
 }
 
 // ── Eventos de pagamento aprovado ──
@@ -53,18 +75,21 @@ function isApprovedEvent(event: string, status?: string): boolean {
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
 
-  // 1) Assinatura
-  const signature = req.headers.get('x-cakto-signature') ?? req.headers.get('x-webhook-signature')
-  if (!verifySignature(rawBody, signature)) {
-    return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
-  }
-
-  // 2) Payload
+  // 1) Payload (parseado antes para permitir validação de secret no corpo)
   let payload: any
   try {
     payload = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Payload inválido' }, { status: 400 })
+  }
+
+  // 2) Validação de origem (tolerante a header-token, secret no corpo ou HMAC)
+  const signature =
+    req.headers.get('x-cakto-signature') ??
+    req.headers.get('x-webhook-signature') ??
+    req.headers.get('authorization')
+  if (!verifyOrigin(rawBody, signature, payload)) {
+    return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
   }
 
   const data = payload.data ?? payload.order ?? payload.purchase ?? payload
