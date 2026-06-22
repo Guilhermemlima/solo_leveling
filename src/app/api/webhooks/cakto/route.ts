@@ -89,6 +89,19 @@ export async function POST(req: NextRequest) {
     req.headers.get('x-webhook-signature') ??
     req.headers.get('authorization')
   if (!verifyOrigin(rawBody, signature, payload)) {
+    // Diagnóstico: registra cabeçalhos + corpo recebidos para identificar o
+    // formato real da Cakto (não cria usuário, não envia e-mail).
+    try {
+      const headersObj: Record<string, string> = {}
+      req.headers.forEach((v, k) => { headersObj[k] = v })
+      await prisma.processedWebhook.create({
+        data: {
+          provider: 'cakto', status: 'auth_failed', action: 'signature_mismatch',
+          email: payload?.data?.customer?.email ?? payload?.customer?.email ?? null,
+          rawPayload: JSON.stringify({ headers: headersObj, body: payload }).slice(0, 8000),
+        },
+      })
+    } catch { /* não falha por causa do log */ }
     return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
   }
 
