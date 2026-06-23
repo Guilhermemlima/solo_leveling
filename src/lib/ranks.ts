@@ -39,7 +39,7 @@ export function nextRank(points: number): Rank | null {
   return idx < RANKS.length - 1 ? RANKS[idx + 1] : null
 }
 
-/** Recompensa em Essências ao alcançar cada patente (marco). E não dá bônus. */
+/** Recompensa em Moedas ao alcançar cada patente (marco). E não dá bônus. */
 export const RANK_REWARDS: Record<Rank['tier'], number> = {
   E: 0,
   D: 50,

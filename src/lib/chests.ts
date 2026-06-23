@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 
 /**
  * Sistema de Caixas de Recompensa (Chi Navy System).
- * Caixas por rank E→S + Especial. Cada abertura sorteia Essências, XP,
+ * Caixas por rank E→S + Especial. Cada abertura sorteia Moedas, XP,
  * possível ponto de atributo e possível equipamento (raridade escalada pelo rank).
  */
 
@@ -14,6 +14,7 @@ export interface ChestConfig {
   name: string
   description: string
   icon: string
+  imageUrl: string
   color: string
   essences: [number, number]
   xp: [number, number]
@@ -30,37 +31,37 @@ export const ATTRIBUTE_KEYS = [
 
 export const CHESTS: Record<ChestRank, ChestConfig> = {
   E: {
-    rank: 'E', key: 'CHEST_E', name: 'Caixa Rank E', description: 'Uma caixa simples dos primeiros despertares.', icon: '📦', color: '#94a3b8',
+    rank: 'E', key: 'CHEST_E', name: 'Caixa Rank E', description: 'Uma caixa simples dos primeiros despertares.', icon: '📦', imageUrl: '/assets/chests/bau-rank-e.png', color: '#94a3b8',
     essences: [10, 25], xp: [10, 20], itemChance: 0.15, attrChance: 0.2, attrPoints: [1, 1],
     rarities: [{ rarity: 'COMMON', weight: 100 }],
   },
   D: {
-    rank: 'D', key: 'CHEST_D', name: 'Caixa Rank D', description: 'Recompensas modestas para caçadores iniciantes.', icon: '🎁', color: '#22c55e',
+    rank: 'D', key: 'CHEST_D', name: 'Caixa Rank D', description: 'Recompensas modestas para caçadores iniciantes.', icon: '🎁', imageUrl: '/assets/chests/bau-rank-d.png', color: '#22c55e',
     essences: [20, 45], xp: [20, 40], itemChance: 0.25, attrChance: 0.3, attrPoints: [1, 1],
     rarities: [{ rarity: 'COMMON', weight: 70 }, { rarity: 'UNCOMMON', weight: 30 }],
   },
   C: {
-    rank: 'C', key: 'CHEST_C', name: 'Caixa Rank C', description: 'Brilho médio. Pode conter itens incomuns ou raros.', icon: '🧰', color: '#3b82f6',
+    rank: 'C', key: 'CHEST_C', name: 'Caixa Rank C', description: 'Brilho médio. Pode conter itens incomuns ou raros.', icon: '🧰', imageUrl: '/assets/chests/bau-rank-c.png', color: '#3b82f6',
     essences: [40, 80], xp: [40, 70], itemChance: 0.4, attrChance: 0.4, attrPoints: [1, 2],
     rarities: [{ rarity: 'UNCOMMON', weight: 65 }, { rarity: 'RARE', weight: 35 }],
   },
   B: {
-    rank: 'B', key: 'CHEST_B', name: 'Caixa Rank B', description: 'Energia arcana intensa. Itens raros e épicos.', icon: '💎', color: '#8b5cf6',
+    rank: 'B', key: 'CHEST_B', name: 'Caixa Rank B', description: 'Energia arcana intensa. Itens raros e épicos.', icon: '💎', imageUrl: '/assets/chests/bau-rank-b.png', color: '#8b5cf6',
     essences: [80, 150], xp: [70, 120], itemChance: 0.55, attrChance: 0.5, attrPoints: [2, 2],
     rarities: [{ rarity: 'RARE', weight: 65 }, { rarity: 'EPIC', weight: 35 }],
   },
   A: {
-    rank: 'A', key: 'CHEST_A', name: 'Caixa Rank A', description: 'Partículas de poder. Itens épicos e lendários.', icon: '🏆', color: '#f59e0b',
+    rank: 'A', key: 'CHEST_A', name: 'Caixa Rank A', description: 'Partículas de poder. Itens épicos e lendários.', icon: '🏆', imageUrl: '/assets/chests/bau-rank-a.png', color: '#f59e0b',
     essences: [150, 300], xp: [120, 200], itemChance: 0.7, attrChance: 0.6, attrPoints: [2, 3],
     rarities: [{ rarity: 'EPIC', weight: 60 }, { rarity: 'LEGENDARY', weight: 40 }],
   },
   S: {
-    rank: 'S', key: 'CHEST_S', name: 'Caixa Rank S', description: 'Explosão de aura. Itens lendários e míticos.', icon: '👑', color: '#ec4899',
+    rank: 'S', key: 'CHEST_S', name: 'Caixa Rank S', description: 'Explosão de aura. Itens lendários e míticos.', icon: '👑', imageUrl: '/assets/chests/bau-rank-s.png', color: '#ec4899',
     essences: [300, 600], xp: [200, 350], itemChance: 0.85, attrChance: 0.75, attrPoints: [3, 3],
     rarities: [{ rarity: 'LEGENDARY', weight: 60 }, { rarity: 'MYTHIC', weight: 40 }],
   },
   SPECIAL: {
-    rank: 'SPECIAL', key: 'CHEST_SPECIAL', name: 'Caixa Especial', description: 'Um portal roxo de runas. Recompensa garantida e rara.', icon: '🔮', color: '#a855f7',
+    rank: 'SPECIAL', key: 'CHEST_SPECIAL', name: 'Caixa Especial', description: 'Um portal roxo de runas. Recompensa garantida e rara.', icon: '🔮', imageUrl: '/assets/chests/bau-especial.png', color: '#a855f7',
     essences: [400, 800], xp: [250, 400], itemChance: 1.0, attrChance: 1.0, attrPoints: [3, 4],
     rarities: [{ rarity: 'MYTHIC', weight: 100 }],
   },

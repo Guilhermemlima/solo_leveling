@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (item.durability <= 0) return NextResponse.json({ error: 'Item quebrado — repare antes de forjar' }, { status: 400 })
 
   const cost = upgradeCost(item.upgradeLevel)
-  if ((user?.essences ?? 0) < cost) return NextResponse.json({ error: `Essências insuficientes (necessário: ${cost})` }, { status: 400 })
+  if ((user?.essences ?? 0) < cost) return NextResponse.json({ error: `Moedas insuficientes (necessário: ${cost})` }, { status: 400 })
 
   const roll = Math.random()
   const chance = upgradeChance(item.upgradeLevel)

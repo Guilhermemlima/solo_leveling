@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (missing === 0) return NextResponse.json({ error: 'Item já está com durabilidade máxima' }, { status: 400 })
 
   const cost = repairCost(missing)
-  if ((user?.essences ?? 0) < cost) return NextResponse.json({ error: `Essências insuficientes (necessário: ${cost})` }, { status: 400 })
+  if ((user?.essences ?? 0) < cost) return NextResponse.json({ error: `Moedas insuficientes (necessário: ${cost})` }, { status: 400 })
 
   await prisma.$transaction([
     prisma.inventory.update({

@@ -93,7 +93,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <p className="text-sm text-slate-400 text-center">
-              Você receberá <span className="text-amber-400 font-bold text-base">{sellPrice(confirmSell)} 💎</span> Essências pela venda.
+              Você receberá <span className="text-amber-400 font-bold text-base">{sellPrice(confirmSell)} 💎</span> Moedas pela venda.
               <br /><span className="text-xs text-slate-600">Esta ação não pode ser desfeita.</span>
             </p>
             <div className="flex gap-2">

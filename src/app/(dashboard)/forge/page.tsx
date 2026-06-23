@@ -124,13 +124,13 @@ export default function ForgePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Hammer className="text-amber-400" /> Forja Sombria</h1>
-        <p className="text-slate-400 text-sm">Aprimore equipamentos com Essências · Funda itens usando Fragmentos de Forja</p>
+        <p className="text-slate-400 text-sm">Aprimore equipamentos com Moedas · Funda itens usando Fragmentos de Forja</p>
       </div>
 
       {/* Currency display */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
-          <Zap size={14} /> {data.essences} Essências
+          <Zap size={14} /> {data.essences} Moedas
         </div>
         <div className="flex items-center gap-2 text-sm text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-2">
           <Flame size={14} /> {data.fragments} Fragmentos de Forja ⚗️

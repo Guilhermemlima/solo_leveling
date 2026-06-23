@@ -82,7 +82,7 @@ export function ResourceBar() {
 
       <div className="max-w-6xl mx-auto px-4 lg:px-8 h-14 flex items-center gap-2 lg:gap-3 relative">
 
-        {/* Essências */}
+        {/* Moedas */}
         <Link
           href="/shop"
           className="resource-chip group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/8 hover:bg-amber-500/18 transition-colors shrink-0"

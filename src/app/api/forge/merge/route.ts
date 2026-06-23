@@ -88,14 +88,14 @@ export async function POST(req: NextRequest) {
         data: {
           userId: auth.userId,
           type: 'FORGE_MERGE',
-          description: `Fusão: 3x ${rarity} → ${compensation} Essências (todos os itens já obtidos)`,
+          description: `Fusão: 3x ${rarity} → ${compensation} Moedas (todos os itens já obtidos)`,
           essenceChange: compensation,
         },
       })
     })
     return NextResponse.json({
       success: true,
-      message: `Você já possui todos os itens desta raridade! Recebeu ${compensation} Essências como compensação.`,
+      message: `Você já possui todos os itens desta raridade! Recebeu ${compensation} Moedas como compensação.`,
       essenceCompensation: compensation,
       fragmentsSpent: fragmentCost,
     })
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
       })
       return NextResponse.json({
         success: true,
-        message: `Item já obtido por outra ação simultânea. Recebeu ${compensation} Essências como compensação.`,
+        message: `Item já obtido por outra ação simultânea. Recebeu ${compensation} Moedas como compensação.`,
         essenceCompensation: compensation,
         fragmentsSpent: fragmentCost,
       })

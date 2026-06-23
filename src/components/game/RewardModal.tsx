@@ -75,7 +75,7 @@ export function RewardModal({ reward, onClose }: RewardModalProps) {
             <div className="flex flex-col items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
               <Coins size={18} className="text-amber-400" />
               <span className="text-xl font-bold text-white">+{reward.essencesGained}</span>
-              <span className="text-xs text-slate-500">Essências</span>
+              <span className="text-xs text-slate-500">Moedas</span>
             </div>
             {reward.newStreak > 1 && (
               <div className="flex flex-col items-center gap-1 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3">
@@ -98,7 +98,7 @@ export function RewardModal({ reward, onClose }: RewardModalProps) {
           {reward.streakReward && (
             <div className="mb-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
               <p className="text-orange-300 text-sm font-semibold">🔥 {reward.streakReward.label}</p>
-              <p className="text-orange-400 text-xs mt-0.5">+{reward.streakReward.essences} Essências bônus!</p>
+              <p className="text-orange-400 text-xs mt-0.5">+{reward.streakReward.essences} Moedas bônus!</p>
             </div>
           )}
 

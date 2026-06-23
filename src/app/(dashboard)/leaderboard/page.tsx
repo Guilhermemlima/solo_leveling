@@ -27,7 +27,7 @@ export default function LeaderboardPage() {
 
       <div className="glass rounded-2xl p-5 border border-purple-500/20">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div><p className="text-xs uppercase tracking-wider text-purple-300">{data.season?.name}</p><p className="text-sm text-slate-500">Ranking sazonal com recompensas cosméticas e Essências.</p></div>
+          <div><p className="text-xs uppercase tracking-wider text-purple-300">{data.season?.name}</p><p className="text-sm text-slate-500">Ranking sazonal com recompensas cosméticas e Moedas.</p></div>
           <Swords className="text-purple-400" />
         </div>
         <div className="grid sm:grid-cols-3 gap-2">

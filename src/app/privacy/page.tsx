@@ -7,6 +7,6 @@ export default function PrivacyPage() {
     <h2 className="text-xl font-semibold text-white">Saúde e bem-estar</h2>
     <p>Observações de saúde são opcionais e servem somente para evitar sugestões incompatíveis. O sistema não substitui orientação médica.</p>
     <h2 className="text-xl font-semibold text-white">Moedas e recompensas</h2>
-    <p>Essências, itens e títulos são fictícios, não possuem valor financeiro e não podem ser convertidos em dinheiro.</p>
+    <p>Moedas, itens e títulos são fictícios, não possuem valor financeiro e não podem ser convertidos em dinheiro.</p>
   </article></main>
 }

@@ -221,7 +221,7 @@ function ReportContent({ data }: { data: any }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '28px' }}>
           {[
             { label: 'Tarefas Concluídas', value: stats.completedTasks, sub: `de ${stats.totalTasks} · ${completionRate}%`, color: '#22c55e' },
-            { label: 'Streak Atual', value: `${user.streak}d`, sub: `${(user.essences ?? 0).toLocaleString('pt-BR')} Essências`, color: '#f59e0b' },
+            { label: 'Streak Atual', value: `${user.streak}d`, sub: `${(user.essences ?? 0).toLocaleString('pt-BR')} Moedas`, color: '#f59e0b' },
             { label: 'Vitórias Arena', value: stats.arenaWins, sub: `${stats.arenaTotal} batalhas`, color: '#ef4444' },
             { label: 'Conquistas', value: stats.achievementsUnlocked, sub: `${stats.missionsCompleted} missões`, color: '#8b5cf6' },
           ].map((s, i) => (

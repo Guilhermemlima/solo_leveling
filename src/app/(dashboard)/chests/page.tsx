@@ -147,7 +147,7 @@ export default function ChestsPage() {
                   <p className="text-sm font-semibold" style={{ color }}>{uc.chest.name}</p>
                   <p className="text-[11px] text-slate-500 mb-3 line-clamp-2">{uc.chest.description}</p>
                   <Button size="sm" variant="primary" className="w-full mt-auto"
-                    onClick={() => setOpening({ id: uc.id, rank: uc.chest.rank, name: uc.chest.name, icon: uc.chest.icon, color })}>
+                    onClick={() => setOpening({ id: uc.id, rank: uc.chest.rank, name: uc.chest.name, icon: uc.chest.icon, imageUrl: uc.chest.imageUrl, color })}>
                     <Gift size={13} /> Abrir
                   </Button>
                 </div>
@@ -163,7 +163,11 @@ export default function ChestsPage() {
             <div className="glass neon-border rounded-2xl divide-y divide-slate-800/60">
               {data.recentOpenings.map((log: any) => (
                 <div key={log.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-lg">{log.chest.icon}</span>
+                  {log.chest.imageUrl ? (
+                    <img src={log.chest.imageUrl} alt={log.chest.name} className="w-9 h-9 object-contain shrink-0" />
+                  ) : (
+                    <span className="text-lg">{log.chest.icon}</span>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-300">{log.chest.name}</p>
                     <p className="text-xs text-slate-500">{new Date(log.createdAt).toLocaleString('pt-BR')}</p>

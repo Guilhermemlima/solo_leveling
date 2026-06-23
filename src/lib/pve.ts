@@ -66,7 +66,7 @@ const WIN_REWARDS: Record<EnemyRank, { xp: number; essences: number }> = {
   S: { xp: 260, essences: 140 },
 }
 
-/** Recompensas de XP/Essências por enfrentar o inimigo. */
+/** Recompensas de XP/Moedas por enfrentar o inimigo. */
 export function pveRewards(rank: string, playerLevel: number, won: boolean): { xp: number; essences: number } {
   if (!won) return { xp: 6, essences: 0 }
   const base = WIN_REWARDS[rank as EnemyRank] || WIN_REWARDS.E

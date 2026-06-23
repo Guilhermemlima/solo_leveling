@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import { calculateLevelUp } from '@/lib/game-logic'
 
 /**
- * Concede XP + essências a um usuário de forma segura e idempotente em volume,
+ * Concede XP + moedas a um usuário de forma segura e idempotente em volume,
  * registrando no histórico. Usado pelos módulos de Finanças e Academia para
  * conectar ações à progressão (EXP, nível, moedas) SEM tocar no sistema de
  * missões existente.

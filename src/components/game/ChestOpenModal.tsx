@@ -25,7 +25,7 @@ export interface OpenResult {
 
 interface Props {
   // o userChest sendo aberto (id + dados visuais)
-  opening: { id: string; rank: string; name: string; icon: string; color: string } | null
+  opening: { id: string; rank: string; name: string; icon: string; imageUrl?: string; color: string } | null
   onDone: () => void
 }
 
@@ -96,7 +96,11 @@ export function ChestOpenModal({ opening, onDone }: Props) {
           <div className="py-6">
             <div className="relative inline-flex items-center justify-center">
               <span className="absolute w-28 h-28 rounded-full aura-pulse" style={{ background: `radial-gradient(circle, ${opening.color}66, transparent 70%)` }} />
-              <span className="text-7xl chest-shake relative">{opening.icon}</span>
+              {opening.imageUrl ? (
+                <img src={opening.imageUrl} alt={opening.name} className="w-28 h-28 object-contain chest-shake relative" />
+              ) : (
+                <span className="text-7xl chest-shake relative">{opening.icon}</span>
+              )}
             </div>
             <p className="text-slate-300 font-medium mt-6">Abrindo {opening.name}…</p>
             <p className="text-xs text-slate-500 mt-1">O Sistema avalia suas recompensas</p>
@@ -105,7 +109,11 @@ export function ChestOpenModal({ opening, onDone }: Props) {
         ) : result ? (
           <>
             <div className="chest-pop">
-              <div className="text-5xl mb-1">{result.chest.icon}</div>
+              {opening.imageUrl ? (
+                <img src={opening.imageUrl} alt={result.chest.name} className="w-20 h-20 object-contain mx-auto mb-1" />
+              ) : (
+                <div className="text-5xl mb-1">{result.chest.icon}</div>
+              )}
               <h2 className="text-lg font-bold" style={{ color: opening.color }}>{result.chest.name}</h2>
               <p className="text-xs text-slate-500 mb-4">Recompensas obtidas</p>
             </div>

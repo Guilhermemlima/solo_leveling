@@ -70,7 +70,7 @@ export default function ProfilePage() {
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-amber-400">{profile.essences?.toLocaleString()}</p>
-                <p className="text-xs text-slate-500">Essências</p>
+                <p className="text-xs text-slate-500">Moedas</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-orange-400">{profile.currentStreak}</p>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
           </div>
           <div className="text-center p-4 bg-slate-800/40 rounded-xl">
             <p className="text-2xl font-bold text-amber-400">{profile.essences?.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">Essências</p>
+            <p className="text-xs text-slate-500 mt-1">Moedas</p>
           </div>
         </div>
         {profile.stats?.tasksByCategory?.length > 0 && (

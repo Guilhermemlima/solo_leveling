@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Você já possui este item' }, { status: 409 })
     }
     if (error instanceof Error && error.message === 'INSUFFICIENT') {
-      return NextResponse.json({ error: 'Essências insuficientes' }, { status: 400 })
+      return NextResponse.json({ error: 'Moedas insuficientes' }, { status: 400 })
     }
     return NextResponse.json({ error: 'Não foi possível concluir a compra' }, { status: 500 })
   }

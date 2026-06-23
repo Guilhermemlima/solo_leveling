@@ -13,7 +13,7 @@ export default function ProgressionPage() {
       <Card icon={<Calculator />} title="Níveis e recompensas">
         <p>{data?.levels?.formula}</p>
         <p>Fácil 10 XP · Média 25 XP · Difícil 50 XP · Extrema 100 XP</p>
-        <p>Cada nível concede 50 Essências extras.</p>
+        <p>Cada nível concede 50 Moedas extras.</p>
       </Card>
       <Card icon={<Shield />} title="Poder de combate">
         <p><b>HP:</b> {data?.combat?.hp}</p><p><b>Ataque:</b> {data?.combat?.attack}</p>

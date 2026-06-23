@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   for (const r of rolled) {
     if (r.type === 'ESSENCES') {
       essencesGain += r.amount || 0
-      resolved.push({ type: 'ESSENCES', amount: r.amount, label: `${r.amount} Essências`, icon: '💎' })
+      resolved.push({ type: 'ESSENCES', amount: r.amount, label: `${r.amount} Moedas`, icon: '💎' })
     } else if (r.type === 'XP') {
       xpGain += r.amount || 0
       resolved.push({ type: 'XP', amount: r.amount, label: `${r.amount} XP`, icon: '⚡' })
@@ -65,10 +65,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         newItemId = item.id
         resolved.push({ type: 'ITEM', equipmentId: item.id, name: item.name, icon: item.icon, rarity: item.rarity, label: item.name, rarityLabel: RARITY_LABEL[item.rarity] })
       } else {
-        // sem item disponível dessa raridade → converte em Essências
+        // sem item disponível dessa raridade → converte em Moedas
         const bonus = 50
         essencesGain += bonus
-        resolved.push({ type: 'ESSENCES', amount: bonus, label: `${bonus} Essências (item duplicado convertido)`, icon: '💎' })
+        resolved.push({ type: 'ESSENCES', amount: bonus, label: `${bonus} Moedas (item duplicado convertido)`, icon: '💎' })
       }
     }
   }
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           // Item already in inventory (race condition) — convert to essences
           const bonus = 50
           await tx.user.update({ where: { id: auth.userId }, data: { essences: { increment: bonus } } })
-          resolved.push({ type: 'ESSENCES', amount: bonus, label: `${bonus} Essências (item já obtido)`, icon: '💎' })
+          resolved.push({ type: 'ESSENCES', amount: bonus, label: `${bonus} Moedas (item já obtido)`, icon: '💎' })
         } else {
           throw e
         }

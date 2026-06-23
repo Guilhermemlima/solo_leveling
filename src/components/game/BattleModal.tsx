@@ -115,7 +115,7 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
             {battle.rankUp && (
               <div className="mb-3 p-2.5 rounded-xl border bg-pink-500/10 border-pink-500/30">
                 <p className="text-sm font-bold" style={{ color: '#ec4899' }}>🎖️ Promovido para {battle.rankUp.label}!</p>
-                <p className="text-xs text-pink-300/80 mt-0.5">+{battle.rankUp.essences} Essências de marco</p>
+                <p className="text-xs text-pink-300/80 mt-0.5">+{battle.rankUp.essences} Moedas de marco</p>
               </div>
             )}
             {battle.rankBlocked && (

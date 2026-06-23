@@ -171,7 +171,7 @@ export default function SettingsPage() {
     <section className="glass neon-border rounded-2xl p-6 space-y-5">
       <h2 className="font-semibold text-slate-200">Preferências</h2>
       <Toggle icon={<ShieldAlert className="text-amber-400" size={18} />} title="Penalidades leves"
-        description="Ao quebrar o streak, perde poucas Essências; nunca perde nível." checked={penalties}
+        description="Ao quebrar o streak, perde poucas Moedas; nunca perde nível." checked={penalties}
         onClick={async () => { const next = !penalties; setPenalties(next); try { await patchSettings({ penaltiesEnabled: next }) } catch { setPenalties(!next) } }} />
       <Toggle icon={<Bell className="text-indigo-400" size={18} />} title="Lembretes do navegador"
         description="Ativa notificações locais. Você pode revogar a permissão no navegador." checked={notifications} onClick={toggleNotifications} />

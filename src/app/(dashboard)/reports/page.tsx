@@ -101,7 +101,7 @@ export default function ReportsPage() {
               { label: 'XP Total Acumulado', value: data.totalXp?.toLocaleString(), color: 'text-indigo-400' },
               { label: 'Melhor Streak', value: `${data.bestStreak} dias`, color: 'text-orange-400' },
               { label: 'Streak Atual', value: `${data.currentStreak} dias`, color: 'text-amber-400' },
-              { label: 'Total de Essências Ganhas', value: data.totalEssences?.toLocaleString(), color: 'text-amber-400' },
+              { label: 'Total de Moedas Ganhas', value: data.totalEssences?.toLocaleString(), color: 'text-amber-400' },
             ].map(({ label, value, color }) => (
               <div key={label} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl">
                 <span className="text-sm text-slate-400">{label}</span>

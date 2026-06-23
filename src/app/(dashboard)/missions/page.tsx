@@ -81,7 +81,7 @@ export default function MissionsPage() {
       const res = await fetch(`/api/missions/${userMissionId}/claim`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { toast(data.error, 'error'); return }
-      toast(`+${data.xpGained} XP e +${data.essencesGained} Essências recebidos!`, 'success')
+      toast(`+${data.xpGained} XP e +${data.essencesGained} Moedas recebidos!`, 'success')
       await Promise.all([fetchMissions(), refreshUser()])
     } catch { toast('Erro ao resgatar missão', 'error') }
     finally { setClaiming(null) }
@@ -107,7 +107,7 @@ export default function MissionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Missões</h1>
-        <p className="text-slate-400 text-sm">Complete missões para ganhar XP e Essências extras</p>
+        <p className="text-slate-400 text-sm">Complete missões para ganhar XP e Moedas extras</p>
       </div>
 
       {/* Tabs */}

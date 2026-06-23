@@ -21,7 +21,7 @@ export const SPECIALIZATIONS = [
     icon: '🧭',
     color: '#8b5cf6',
     description: 'Transforma planejamento em execução consistente.',
-    perks: ['+5% XP em Trabalho', '+1 Essência por rotina concluída', 'Modelos de rotina destacados'],
+    perks: ['+5% XP em Trabalho', '+1 Moeda por rotina concluída', 'Modelos de rotina destacados'],
   },
   {
     key: 'HARMONIZER',
