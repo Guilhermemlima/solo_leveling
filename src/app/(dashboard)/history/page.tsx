@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
 
@@ -56,8 +57,8 @@ export default function HistoryPage() {
                       </div>
                       <div className="text-right shrink-0">
                         {item.xpChange > 0 && <p className="text-xs text-indigo-400">+{item.xpChange} XP</p>}
-                        {item.essenceChange > 0 && <p className="text-xs text-amber-400">+{item.essenceChange} 💎</p>}
-                        {item.essenceChange < 0 && <p className="text-xs text-red-400">{item.essenceChange} 💎</p>}
+                        {item.essenceChange > 0 && <p className="text-xs text-amber-400">+{item.essenceChange} <CoinIcon /></p>}
+                        {item.essenceChange < 0 && <p className="text-xs text-red-400">{item.essenceChange} <CoinIcon /></p>}
                       </div>
                     </div>
                   </div>

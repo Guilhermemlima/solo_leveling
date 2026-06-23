@@ -128,7 +128,9 @@ export function ChestOpenModal({ opening, onDone }: Props) {
                 return (
                   <div key={i} className="reward-in flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border"
                     style={{ borderColor: `${color}40`, animationDelay: `${i * 90}ms`, opacity: 0 }}>
-                    <span className="text-2xl">{r.icon || '🎁'}</span>
+                    {typeof r.icon === 'string' && r.icon.startsWith('/')
+                      ? <img src={r.icon} alt="" className="w-7 h-7 object-contain" />
+                      : <span className="text-2xl">{r.icon || '🎁'}</span>}
                     <div className="text-left flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-200 truncate" style={r.type === 'ITEM' ? { color } : undefined}>{r.label}</p>
                       {r.rarityLabel && <p className="text-xs" style={{ color }}>{r.rarityLabel}</p>}

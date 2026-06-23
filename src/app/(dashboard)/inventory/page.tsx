@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { Package, Shield, ShoppingBag, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -93,7 +94,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <p className="text-sm text-slate-400 text-center">
-              Você receberá <span className="text-amber-400 font-bold text-base">{sellPrice(confirmSell)} 💎</span> Moedas pela venda.
+              Você receberá <span className="text-amber-400 font-bold text-base">{sellPrice(confirmSell)} <CoinIcon /></span> Moedas pela venda.
               <br /><span className="text-xs text-slate-600">Esta ação não pode ser desfeita.</span>
             </p>
             <div className="flex gap-2">
@@ -235,10 +236,10 @@ function ItemCard({ inv, onToggle, loadingEquip, onSell, loadingSell }: {
             onClick={onSell}
             disabled={loadingSell}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-amber-500/25 bg-amber-500/8 hover:bg-amber-500/18 text-amber-400 text-xs font-semibold transition-all disabled:opacity-50"
-            title={`Vender por ${price} 💎`}
+            title={`Vender por ${price} moedas`}
           >
             <ShoppingBag size={12} />
-            {price} 💎
+            {price} <CoinIcon />
           </button>
         )}
       </div>

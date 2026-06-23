@@ -32,11 +32,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: {
         userId: auth.userId,
         type: 'ITEM_SOLD',
-        description: `Vendido: ${item.equipment.name}${item.upgradeLevel > 0 ? ` +${item.upgradeLevel}` : ''} → +${totalEssences} 💎`,
+        description: `Vendido: ${item.equipment.name}${item.upgradeLevel > 0 ? ` +${item.upgradeLevel}` : ''} → +${totalEssences} 🪙`,
         essenceChange: totalEssences,
       },
     })
   })
 
-  return NextResponse.json({ success: true, essencesGained: totalEssences, message: `${item.equipment.name} vendido por ${totalEssences} 💎` })
+  return NextResponse.json({ success: true, essencesGained: totalEssences, message: `${item.equipment.name} vendido por ${totalEssences} 🪙` })
 }

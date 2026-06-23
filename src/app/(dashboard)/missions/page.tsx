@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState, useCallback } from 'react'
 import { Gift, CheckCircle, Clock, Calendar, Star, Zap, Target } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -210,7 +211,7 @@ export default function MissionsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex gap-3 text-xs">
                             <span className="text-indigo-400">+{um.mission.xpReward} XP</span>
-                            <span className="text-amber-400">+{um.mission.essenceReward} 💎</span>
+                            <span className="text-amber-400">+{um.mission.essenceReward} <CoinIcon /></span>
                           </div>
                           {isCompleted && !isClaimed && (
                             <Button size="sm" variant="gold" loading={claiming === um.id} onClick={() => claimMission(um.id)}>

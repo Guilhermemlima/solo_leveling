@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { Gift, Sparkles, Package, Info, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -106,7 +107,7 @@ export default function ChestsPage() {
                 {data.odds.map((o: any) => (
                   <div key={o.rank} className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="font-bold w-8" style={{ color: RANK_COLOR[o.rank] }}>{o.rank}</span>
-                    <span className="text-slate-400">💎 {o.essences[0]}–{o.essences[1]}</span>
+                    <span className="text-slate-400"><CoinIcon /> {o.essences[0]}–{o.essences[1]}</span>
                     <span className="text-slate-400">⚡ {o.xp[0]}–{o.xp[1]} XP</span>
                     <span className="text-purple-300">Item: {o.itemChance}%</span>
                     <span className="text-cyan-300">Atributo: {o.attrChance}%</span>
@@ -174,7 +175,9 @@ export default function ChestsPage() {
                   </div>
                   <div className="flex flex-wrap gap-1 justify-end max-w-[55%]">
                     {(log.rewardsJson as any[]).map((r, i) => (
-                      <span key={i} className="text-[10px] bg-slate-800/60 border border-slate-700/50 rounded px-1.5 py-0.5 text-slate-300">{r.icon} {r.label}</span>
+                      <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-slate-800/60 border border-slate-700/50 rounded px-1.5 py-0.5 text-slate-300">
+                        {typeof r.icon === 'string' && r.icon.startsWith('/') ? <img src={r.icon} alt="" className="w-3 h-3 object-contain" /> : r.icon} {r.label}
+                      </span>
                     ))}
                   </div>
                 </div>

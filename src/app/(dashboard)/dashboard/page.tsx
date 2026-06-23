@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Flame, Coins, Zap, TrendingUp, CheckCircle, Clock, Target, Heart, Shield, Swords, FlaskConical, Wallet, Dumbbell, Scale } from 'lucide-react'
@@ -254,7 +255,7 @@ export default function DashboardPage() {
                             {DIFFICULTY_LABELS[task.difficulty as keyof typeof DIFFICULTY_LABELS]}
                           </span>
                           <span className="text-xs text-indigo-400">+{task.xpReward} XP</span>
-                          <span className="text-xs text-amber-400">+{task.essenceReward} 💎</span>
+                          <span className="text-xs text-amber-400">+{task.essenceReward} <CoinIcon /></span>
                         </div>
                       </div>
                       {task.status !== 'COMPLETED' && (
@@ -314,7 +315,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex gap-2 mt-1.5">
                         <span className="text-xs text-indigo-400">+{um.mission.xpReward} XP</span>
-                        <span className="text-xs text-amber-400">+{um.mission.essenceReward} 💎</span>
+                        <span className="text-xs text-amber-400">+{um.mission.essenceReward} <CoinIcon /></span>
                       </div>
                     </div>
                   )
@@ -342,8 +343,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right shrink-0">
                     {activity.xpChange !== 0 && <p className="text-xs text-indigo-400">+{activity.xpChange} XP</p>}
-                    {activity.essenceChange > 0 && <p className="text-xs text-amber-400">+{activity.essenceChange} 💎</p>}
-                    {activity.essenceChange < 0 && <p className="text-xs text-red-400">{activity.essenceChange} 💎</p>}
+                    {activity.essenceChange > 0 && <p className="text-xs text-amber-400">+{activity.essenceChange} <CoinIcon /></p>}
+                    {activity.essenceChange < 0 && <p className="text-xs text-red-400">{activity.essenceChange} <CoinIcon /></p>}
                   </div>
                 </div>
               ))}

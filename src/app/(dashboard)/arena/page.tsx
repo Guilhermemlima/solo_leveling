@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -710,7 +711,7 @@ export default function ArenaPage() {
                         <span className={bot.risk.color === 'red' ? 'text-red-400' : bot.risk.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'}>{bot.risk.label}</span>
                       </div>
                       <div className="text-[10px] text-slate-600 mb-3">
-                        +{bot.rewards.xp} XP · +{bot.rewards.essences} 💎 · +{bot.rewards.points} pts
+                        +{bot.rewards.xp} XP · +{bot.rewards.essences} <CoinIcon /> · +{bot.rewards.points} pts
                       </div>
                       <Button size="sm" variant="primary" className="w-full mt-auto" loading={fighting === bot.id} onClick={() => startBattle(bot)}>
                         <Swords size={12} /> Batalhar
@@ -771,7 +772,7 @@ export default function ArenaPage() {
                       </div>
                       <div className="text-right text-xs shrink-0">
                         <span className="text-indigo-400">+{b.xpChange} XP</span>
-                        {b.essenceChange > 0 && <span className="text-amber-400 ml-2">+{b.essenceChange} 💎</span>}
+                        {b.essenceChange > 0 && <span className="text-amber-400 ml-2">+{b.essenceChange} <CoinIcon /></span>}
                       </div>
                     </div>
                   ))}
@@ -883,7 +884,7 @@ export default function ArenaPage() {
                       </div>
                       <div className="text-right text-xs shrink-0 space-y-0.5">
                         {b.xpChange > 0 && <p className="text-indigo-400 font-semibold">+{b.xpChange} XP</p>}
-                        {b.essenceChange > 0 && <p className="text-amber-400">+{b.essenceChange} 💎</p>}
+                        {b.essenceChange > 0 && <p className="text-amber-400">+{b.essenceChange} <CoinIcon /></p>}
                       </div>
                     </div>
                   ))}

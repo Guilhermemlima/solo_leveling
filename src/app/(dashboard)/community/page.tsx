@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { Copy, Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -36,7 +37,7 @@ export default function CommunityPage() {
           <button onClick={() => { navigator.clipboard.writeText(group.inviteCode); toast('Código copiado', 'info') }} className="text-xs text-indigo-400 flex items-center gap-1"><Copy size={12} /> {group.inviteCode}</button></div>
         <div className="mt-4 space-y-3">{group.challenges.map((challenge: any) => {
           const progress = challenge.contributions.reduce((sum: number, item: any) => sum + item.value, 0)
-          return <div key={challenge.id} className="rounded-xl bg-slate-900/50 p-4"><div className="flex justify-between text-sm"><span className="text-slate-200">{challenge.title}</span><span className="text-amber-400">+{challenge.reward} 💎</span></div>
+          return <div key={challenge.id} className="rounded-xl bg-slate-900/50 p-4"><div className="flex justify-between text-sm"><span className="text-slate-200">{challenge.title}</span><span className="text-amber-400">+{challenge.reward} <CoinIcon /></span></div>
             <div className="h-2 bg-slate-800 rounded-full mt-3 overflow-hidden"><div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${Math.min(100, progress / challenge.target * 100)}%` }} /></div>
             <p className="text-xs text-slate-500 mt-1">{progress}/{challenge.target} tarefas coletivas</p></div>
         })}</div>

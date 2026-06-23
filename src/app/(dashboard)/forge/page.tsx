@@ -1,4 +1,5 @@
 'use client'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { useEffect, useState } from 'react'
 import { Hammer, Zap, Shield, Star, Wrench, ChevronRight, AlertTriangle, Flame, Trash2, Shuffle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -244,7 +245,7 @@ export default function ForgePage() {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-slate-800/60 rounded-lg p-2"><p className="text-slate-500 mb-0.5">Nível atual</p><p className="text-white font-bold">{sel.upgradeLabel}</p></div>
                         <div className="bg-slate-800/60 rounded-lg p-2"><p className="text-slate-500 mb-0.5">Próximo</p><p className="text-amber-400 font-bold">+{sel.upgradeLevel + 1}</p></div>
-                        <div className="bg-slate-800/60 rounded-lg p-2"><p className="text-slate-500 mb-0.5">Custo</p><p className="text-amber-300 font-bold">{sel.nextCost} 💎</p></div>
+                        <div className="bg-slate-800/60 rounded-lg p-2"><p className="text-slate-500 mb-0.5">Custo</p><p className="text-amber-300 font-bold">{sel.nextCost} <CoinIcon /></p></div>
                         <div className="bg-slate-800/60 rounded-lg p-2"><p className="text-slate-500 mb-0.5">Chance</p><p className={`font-bold ${parseFloat(sel.nextChance) >= 70 ? 'text-emerald-400' : parseFloat(sel.nextChance) >= 40 ? 'text-amber-400' : 'text-red-400'}`}>{sel.nextChance}</p></div>
                       </div>
                       {sel.durability <= 0 && (
@@ -253,7 +254,7 @@ export default function ForgePage() {
                         </div>
                       )}
                       <Button variant="primary" className="w-full" loading={working} disabled={!sel.canUpgrade || data.essences < sel.nextCost} onClick={upgrade}>
-                        <Hammer size={14} /> Aprimorar (+{sel.upgradeLevel + 1}) · {sel.nextCost} 💎
+                        <Hammer size={14} /> Aprimorar (+{sel.upgradeLevel + 1}) · {sel.nextCost} <CoinIcon />
                       </Button>
                     </>
                   )}
@@ -265,10 +266,10 @@ export default function ForgePage() {
                     <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Wrench size={12} className="text-blue-400" /> Reparar</p>
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <span>Durabilidade faltante: {sel.durabilityMax - sel.durability}</span>
-                      <span>Custo: <span className="text-amber-300 font-semibold">{sel.repairCost} 💎</span></span>
+                      <span>Custo: <span className="text-amber-300 font-semibold">{sel.repairCost} <CoinIcon /></span></span>
                     </div>
                     <Button variant="secondary" className="w-full" loading={working} disabled={data.essences < sel.repairCost} onClick={repair}>
-                      <Wrench size={14} /> Reparar Completamente · {sel.repairCost} 💎
+                      <Wrench size={14} /> Reparar Completamente · {sel.repairCost} <CoinIcon />
                     </Button>
                   </div>
                 )}
@@ -434,7 +435,7 @@ export default function ForgePage() {
                   <p className={`text-sm ${log.success ? 'text-slate-200' : 'text-red-300'}`}>{log.detail ?? log.action}</p>
                   <p className="text-xs text-slate-500">{new Date(log.createdAt).toLocaleString('pt-BR')}</p>
                 </div>
-                <span className="text-xs text-amber-400 shrink-0">-{log.costEssences} 💎</span>
+                <span className="text-xs text-amber-400 shrink-0">-{log.costEssences} <CoinIcon /></span>
               </div>
             ))}
           </div>
