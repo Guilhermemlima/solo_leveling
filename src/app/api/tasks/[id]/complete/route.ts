@@ -191,19 +191,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         { type: 'STREAK', value: newStreak },
         { type: 'TOTAL_XP', value: user.totalXp + xpGained },
       ]
-      for (const check of achievementChecks) {
-        const eligible = await tx.achievement.findMany({
-          where: { requirementType: check.type, requirementValue: { lte: check.value } },
+      // 1 query (OR) + 1 insert em lote, em vez de 4 buscas + N upserts
+      const eligible = await tx.achievement.findMany({
+        where: { OR: achievementChecks.map(c => ({ requirementType: c.type, requirementValue: { lte: c.value } })) },
+        select: { id: true },
+      })
+      if (eligible.length > 0) {
+        await tx.userAchievement.createMany({
+          data: eligible.map(a => ({ userId: auth.userId, achievementId: a.id })),
+          skipDuplicates: true,
         })
-        for (const achievement of eligible) {
-          await tx.userAchievement.upsert({
-            where: {
-              userId_achievementId: { userId: auth.userId, achievementId: achievement.id },
-            },
-            update: {},
-            create: { userId: auth.userId, achievementId: achievement.id },
-          })
-        }
       }
 
       const activeMissions = await tx.userMission.findMany({

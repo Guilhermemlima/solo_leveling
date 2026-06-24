@@ -157,9 +157,9 @@ export default function DashboardPage() {
 
         {/* XP Bar */}
         <div data-gsap className="glass neon-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
             <span className="text-sm font-semibold text-slate-300">Progresso para o Nível {(u?.level || 0) + 1}</span>
-            <span className="text-xs text-indigo-400">{data?.weeklyCompleted || 0} tarefas esta semana</span>
+            <span className="text-xs text-indigo-400 shrink-0">{data?.weeklyCompleted || 0} tarefas esta semana</span>
           </div>
           <XPBar currentXp={u?.currentXp || 0} xpForNextLevel={u?.xpForNextLevel || 100} level={u?.level || 1} />
         </div>
