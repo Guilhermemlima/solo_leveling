@@ -23,6 +23,9 @@ const ACHIEVEMENTS = [
   { name: 'Quebrador de Recordes',  description: 'Bata 5 recordes pessoais',                icon: '💥', requirementType: 'FITNESS_PR',             requirementValue: 5 },
   { name: 'Corpo em Ascensão',      description: 'Conclua uma meta física',                 icon: '🌟', requirementType: 'FITNESS_GOAL_COMPLETED', requirementValue: 1 },
   { name: 'Monitor Corporal',       description: 'Registre 5 medições corporais',           icon: '📏', requirementType: 'FITNESS_MEASUREMENTS',   requirementValue: 5 },
+
+  // ── PLANO / FUNDADOR (concedida na compra, não por threshold) ──
+  { name: 'Fundador',               description: 'Apoiou o Ascend System adquirindo um plano', icon: '👑', requirementType: 'FOUNDER',              requirementValue: 999999 },
 ]
 
 async function main() {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { sendAccessEmail, generateTemporaryPassword, planLabel } from '@/lib/resend'
+import { grantPlanRewards } from '@/lib/plan-rewards'
 import crypto from 'crypto'
 
 // ── Mapeamento produto/oferta Cakto → plano interno ──────────────────────────
@@ -194,6 +195,9 @@ export async function POST(req: NextRequest) {
       })
       console.log(`[Cakto] Plano atualizado para usuário existente: ${email} → ${planKey}`)
 
+      // Recompensas de boas-vindas do plano (dedup por transactionId garante 1x por compra)
+      await grantPlanRewards(existingUser.id, planKey).catch(() => {})
+
       // Envia e-mail com novos dados de acesso
       const sent = await sendAccessEmail({
         name, email, temporaryPassword: tempPassword,
@@ -213,8 +217,8 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hashPassword(tempPassword)
     const missions = await prisma.mission.findMany({ where: { minDayUnlock: 0 }, select: { id: true } })
 
-    await prisma.$transaction(async tx => {
-      await tx.user.create({
+    const createdUser = await prisma.$transaction(async tx => {
+      const u = await tx.user.create({
         data: {
           name, email, passwordHash,
           plan:               planKey,
@@ -226,10 +230,15 @@ export async function POST(req: NextRequest) {
           attributes:  { create: {} },
           userMissions: { create: missions.map(m => ({ missionId: m.id })) },
         },
+        select: { id: true },
       })
       await tx.pendingMember.deleteMany({ where: { email } })
+      return u
     })
     console.log(`[Cakto] Usuário criado: ${email} | plano: ${planKey}`)
+
+    // Recompensas de boas-vindas do plano
+    await grantPlanRewards(createdUser.id, planKey).catch(() => {})
 
     // 7) Envia e-mail de acesso (não quebra o webhook se falhar)
     const sent = await sendAccessEmail({

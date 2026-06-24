@@ -25,6 +25,7 @@ export const TITLES: Title[] = [
   { achievement: 'Atleta em Evolução',     title: 'Atleta em Evolução',     icon: '🔥', color: '#8b5cf6' },
   { achievement: 'Corpo em Ascensão',      title: 'Corpo em Ascensão',      icon: '🌟', color: '#f59e0b' },
   { achievement: 'Grande Investidor',      title: 'Grande Investidor',      icon: '🏦', color: '#f59e0b' },
+  { achievement: 'Fundador',               title: 'Fundador',               icon: '👑', color: '#fbbf24' },
 ]
 
 /** Maior título (mais prestigioso) entre os nomes de conquistas desbloqueadas. */
