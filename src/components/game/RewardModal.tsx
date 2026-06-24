@@ -15,6 +15,7 @@ interface RewardModalProps {
     attributeGains?: Record<string, number>
     classBonus?: { name?: string; percent?: number } | null
     specializationBonus?: { name?: string; percent?: number } | null
+    levelBonus?: { percent?: number } | null
     chestReward?: { rank: string; name: string; icon: string } | null
   } | null
   onClose: () => void
@@ -110,6 +111,15 @@ export function RewardModal({ reward, onClose }: RewardModalProps) {
               </p>
             </div>
           )}
+
+          {reward.levelBonus && reward.levelBonus.percent ? (
+            <div className="mb-3 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center gap-1.5">
+              <Sparkles size={13} className="text-amber-400" />
+              <p className="text-amber-300 text-xs font-medium">
+                Bônus de nível <span className="font-semibold">+{reward.levelBonus.percent}%</span> sobre a recompensa base
+              </p>
+            </div>
+          ) : null}
 
           {reward.chestReward && (
             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">

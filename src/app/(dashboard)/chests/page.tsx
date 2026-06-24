@@ -79,9 +79,11 @@ export default function ChestsPage() {
                 <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center"><Calendar size={18} className="text-purple-400" /></div>
                 <div>
                   <p className="text-sm font-semibold text-slate-200">Recompensa diária do Sistema</p>
-                  <p className="text-xs text-slate-500">{daily.completed}/{daily.total} missões diárias concluídas ({Math.round(daily.ratio * 100)}%)</p>
-                  <div className="mt-2 h-1.5 w-40 bg-slate-800 rounded-full overflow-hidden">
+                  <p className="text-xs text-slate-500">{daily.completed}/{daily.total} missões diárias concluídas ({Math.round(daily.ratio * 100)}%) · <span className="text-slate-400">meta 80% → Rank D · 100% → Rank C</span></p>
+                  <div className="relative mt-2 h-1.5 w-40 bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all" style={{ width: `${Math.min(100, daily.ratio * 100)}%` }} />
+                    {/* marcador da meta de 80% */}
+                    <span className="absolute top-0 bottom-0 w-px bg-amber-400/70" style={{ left: '80%' }} title="Meta: 80%" />
                   </div>
                 </div>
               </div>

@@ -250,6 +250,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         specializationBonus: specializationMatches
           ? { name: specialization?.name, percent: 5 }
           : null,
+        levelBonus: lvlMult > 1
+          ? { percent: Math.round((lvlMult - 1) * 100) }
+          : null,
         chestReward,
       }
 
