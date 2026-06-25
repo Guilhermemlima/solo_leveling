@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Swords, Zap, Coins, Shield, Heart } from 'lucide-react'
+import { Swords, Zap, Shield, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { CoinIcon } from '@/components/ui/CoinIcon'
 import { Confetti } from '@/components/game/Confetti'
 
 interface Round {
@@ -132,7 +133,7 @@ export function BattleModal({ battle, playerName, onClose }: Props) {
               </span>
               {battle.rewards.essences > 0 && (
                 <span className="flex items-center gap-1 text-sm bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5 text-amber-300">
-                  <Coins size={13} /> +{battle.rewards.essences}
+                  <CoinIcon className="w-3.5 h-3.5 object-contain" /> +{battle.rewards.essences}
                 </span>
               )}
               {battle.rewards.points !== 0 && (
