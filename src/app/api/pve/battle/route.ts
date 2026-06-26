@@ -38,8 +38,10 @@ export async function POST(req: NextRequest) {
   }
   const playerStats = deriveStats(player)
 
-  // Bloqueio por poder insuficiente
-  const ready = readiness(playerStats.power, enemy.recommendedPower)
+  const enemyStats = enemyToStats(enemy)
+
+  // Bloqueio por poder insuficiente (mesma escala de poder do jogador)
+  const ready = readiness(playerStats.power, enemyStats.power)
   if (ready.locked) {
     return NextResponse.json({
       error: 'Você ainda não está pronto. Complete missões reais, melhore seus atributos e equipe itens melhores antes de enfrentar este inimigo.',
@@ -47,7 +49,6 @@ export async function POST(req: NextRequest) {
     }, { status: 400 })
   }
 
-  const enemyStats = enemyToStats(enemy)
   const result = simulateStats(playerStats, enemyStats)
 
   const rewards = pveRewards(enemy.rank, user.level, result.playerWon)

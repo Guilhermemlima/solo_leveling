@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 import { deriveStats, computeEquipBonuses, type Attributes, type Combatant } from '@/lib/battle'
-import { readiness } from '@/lib/pve'
+import { readiness, enemyToStats } from '@/lib/pve'
 
 const RANK_ORDER: Record<string, number> = { E: 0, D: 1, C: 2, B: 3, A: 4, S: 5 }
 
@@ -45,9 +45,9 @@ export async function GET() {
     weakness: e.weakness,
     resistance: e.resistance,
     specialMechanic: e.specialMechanic,
-    recommendedPower: e.recommendedPower,
+    recommendedPower: enemyToStats(e).power,
     drops: e.drops,
-    readiness: readiness(playerStats.power, e.recommendedPower),
+    readiness: readiness(playerStats.power, enemyToStats(e).power),
   }))
 
   const recentBattles = await prisma.battle.findMany({

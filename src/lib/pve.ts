@@ -25,16 +25,23 @@ export const ENEMY_RANK_COLOR: Record<string, string> = {
   E: '#94a3b8', D: '#22c55e', C: '#3b82f6', B: '#8b5cf6', A: '#f59e0b', S: '#ef4444',
 }
 
+/** Poder de combate na MESMA escala do jogador (deriveStats), para que a
+ *  prontidão reflita a luta real, e não um número fixo do seed. */
+export function combatPower(hp: number, atk: number, def: number, crit: number): number {
+  return Math.round(hp * 0.5 + atk * 3 + def * 2 + crit * 100)
+}
+
 /** Converte um inimigo em stats de combate para a simulação. */
 export function enemyToStats(e: EnemyLike): CombatStats {
   const rank = e.rank as EnemyRank
+  const crit = RANK_CRIT[rank] ?? 0.05
   return {
     hp: e.hp,
     atk: e.attack,
     def: e.defense,
-    crit: RANK_CRIT[rank] ?? 0.05,
+    crit,
     speed: Math.round(e.recommendedPower / 28),
-    power: e.recommendedPower,
+    power: combatPower(e.hp, e.attack, e.defense, crit),
   }
 }
 
