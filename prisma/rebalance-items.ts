@@ -22,9 +22,10 @@ const BANDS: Record<string, [number, number]> = {
   MYTHIC:    [255, 320],
 }
 
-// Multiplicador de preço por raridade (preço = valor * k)
+// Multiplicador de preço por raridade (preço = valor * k) — curva premium:
+// encarece mais os ranks baixos/médios e reajusta de leve os altos.
 const PRICE_K: Record<string, number> = {
-  COMMON: 2, UNCOMMON: 4, RARE: 7, EPIC: 15, LEGENDARY: 28, MYTHIC: 46,
+  COMMON: 6, UNCOMMON: 9.5, RARE: 14, EPIC: 22, LEGENDARY: 31, MYTHIC: 49,
 }
 
 // Posição do slot dentro da faixa (peças menores ficam no piso, conjunto/arma no topo)
