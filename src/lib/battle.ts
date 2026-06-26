@@ -135,7 +135,11 @@ export function simulateStats(ps: CombatStats, os: CombatStats): BattleResult {
     const defStats = playerTurn ? os : ps
 
     const isCrit = Math.random() < atkStats.crit
-    let dmg = (atkStats.atk - defStats.def * 0.5) * rng(0.85, 1.15)
+    // Mitigação por defesa, mas com piso proporcional ao ataque: mesmo contra
+    // alvos muito defensivos, o atacante sempre causa ao menos 15% do seu ATK
+    // (evita que defesa alta zere o dano e trave a luta em 1 de dano).
+    const mitigated = atkStats.atk - defStats.def * 0.5
+    let dmg = Math.max(atkStats.atk * 0.15, mitigated) * rng(0.85, 1.15)
     dmg = Math.max(1, dmg)
     if (isCrit) dmg *= 1.7
     dmg = Math.round(dmg)
