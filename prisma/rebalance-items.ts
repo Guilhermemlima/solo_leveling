@@ -43,13 +43,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 
 async function main() {
   const items = await prisma.equipment.findMany({
-    select: { id: true, name: true, type: true, rarity: true, bonusType: true, bonusValue: true, price: true },
+    select: { id: true, name: true, type: true, rarity: true, bonusType: true, bonusValue: true, price: true, isFullSet: true, setKey: true },
   })
 
   let changed = 0
   const rows: string[] = []
   for (const it of items) {
     if (!GEAR_TYPES.includes(it.type)) continue
+    if (it.isFullSet) continue // conjuntos são recalculados a partir das peças (abaixo)
     const band = BANDS[it.rarity]
     if (!band) continue
 
@@ -66,9 +67,27 @@ async function main() {
     }
   }
 
+  // ── Conjuntos (full sets): preço = soma das peças; bônus = soma dos bônus das peças ──
+  // Garante que comprar o conjunto nunca fique negativo/grátis.
+  const fullSets = items.filter(i => i.isFullSet && i.setKey)
+  let setsFixed = 0
+  for (const set of fullSets) {
+    const pieces = items.filter(i => i.setKey === set.setKey && !i.isFullSet)
+    if (pieces.length === 0) continue
+    // recalcula com os valores JÁ rebalanceados das peças
+    const fresh = await prisma.equipment.findMany({ where: { setKey: set.setKey, isFullSet: false }, select: { price: true, bonusValue: true } })
+    const sumPrice = fresh.reduce((s, p) => s + p.price, 0)
+    const sumBonus = fresh.reduce((s, p) => s + (p.bonusValue ?? 0), 0)
+    if (sumPrice !== set.price || sumBonus !== set.bonusValue) {
+      await prisma.equipment.update({ where: { id: set.id }, data: { price: sumPrice, bonusValue: sumBonus, bonusType: 'DEFENSE' } })
+      rows.push(`${set.rarity.padEnd(10)} CONJUNTO   ${String(set.bonusValue).padStart(4)}→${String(sumBonus).padStart(4)}  $${String(set.price).padStart(5)}→$${String(sumPrice).padStart(5)}  ${set.name}`)
+      setsFixed++
+    }
+  }
+
   rows.sort()
   console.log(rows.join('\n'))
-  console.log(`\n✅ ${changed} itens rebalanceados (de ${items.length}). Acessórios/consumíveis intactos.`)
+  console.log(`\n✅ ${changed} itens + ${setsFixed} conjuntos rebalanceados (de ${items.length}). Acessórios/consumíveis intactos.`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) }).finally(() => prisma.$disconnect())

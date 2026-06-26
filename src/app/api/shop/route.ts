@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   // For full-set items, compute piece ownership and effective price
   const fullSets = equipment.filter(e => e.isFullSet && e.setKey)
-  const setKeyToPieces: Record<string, { total: number; owned: number; ownedValue: number }> = {}
+  const setKeyToPieces: Record<string, { total: number; owned: number; missingValue: number }> = {}
   if (fullSets.length > 0) {
     const setKeys = fullSets.map(e => e.setKey!)
     const pieces = await prisma.equipment.findMany({
@@ -37,23 +37,25 @@ export async function GET(req: NextRequest) {
     for (const sk of setKeys) {
       const skPieces = pieces.filter(p => p.setKey === sk)
       const ownedPieces = skPieces.filter(p => ownedIds.includes(p.id))
+      // preço efetivo = soma das peças que faltam (paga só pelo que recebe)
+      const missingValue = skPieces.filter(p => !ownedIds.includes(p.id)).reduce((s, p) => s + p.price, 0)
       setKeyToPieces[sk] = {
         total: skPieces.length,
         owned: ownedPieces.length,
-        ownedValue: ownedPieces.reduce((s, p) => s + p.price, 0),
+        missingValue,
       }
     }
   }
 
   return NextResponse.json(equipment.map(e => {
     if (e.isFullSet && e.setKey && setKeyToPieces[e.setKey]) {
-      const { total, owned: ownedPieces, ownedValue } = setKeyToPieces[e.setKey]
+      const { total, owned: ownedPieces, missingValue } = setKeyToPieces[e.setKey]
       return {
         ...e,
         owned: ownedPieces >= total,
         ownedPieces,
         totalPieces: total,
-        effectivePrice: Math.max(0, e.price - ownedValue),
+        effectivePrice: missingValue,
       }
     }
     return { ...e, owned: ownedIds.includes(e.id) }

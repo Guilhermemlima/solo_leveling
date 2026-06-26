@@ -36,11 +36,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Você já possui todas as peças deste conjunto!' }, { status: 409 })
   }
 
-  // Cost = full set price - sum of prices of already-owned pieces
-  const ownedPiecesValue = pieces
-    .filter(p => ownedPieceIds.has(p.id))
-    .reduce((sum, p) => sum + p.price, 0)
-  const effectiveCost = Math.max(0, fullSetItem.price - ownedPiecesValue)
+  // Custo = soma dos preços das peças que ainda faltam (paga só pelo que recebe).
+  // Robusto: não depende do preço do item "conjunto", evitando custo negativo/grátis.
+  const effectiveCost = missingPieces.reduce((sum, p) => sum + p.price, 0)
 
   const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { essences: true } })
   if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
