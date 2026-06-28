@@ -7,14 +7,21 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
 }
 
-/** Calcula a razão de conclusão das missões diárias e o estado do prêmio. */
+/** Calcula a razão de conclusão das missões diárias CONCLUÍDAS HOJE. */
 async function dailyState(userId: string) {
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
   const daily = await prisma.userMission.findMany({
     where: { userId, mission: { type: 'DAILY' } },
-    include: { mission: true },
+    select: { status: true, completedAt: true },
   })
   const total = daily.length
-  const completed = daily.filter(m => m.status === 'COMPLETED' || m.status === 'CLAIMED').length
+  // Conta apenas missões concluídas HOJE — não arrasta conclusões de dias anteriores
+  // (evita a caixa "grátis" diária por missões antigas presas em COMPLETED).
+  const completed = daily.filter(
+    m => (m.status === 'COMPLETED' || m.status === 'CLAIMED') && m.completedAt != null && m.completedAt >= startOfToday
+  ).length
   const ratio = total > 0 ? completed / total : 0
   return { total, completed, ratio }
 }

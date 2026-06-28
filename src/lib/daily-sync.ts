@@ -62,12 +62,14 @@ export async function syncUserDaily(userId: string) {
     }),
   )
 
-  // 2) Reiniciar missões diárias/semanais/mensais cujo período passou
-  //    Só reseta ACTIVE e CLAIMED — COMPLETED (recompensa pendente) fica até ser resgatada
+  // 2) Reiniciar missões diárias/semanais/mensais cujo período passou.
+  //    Inclui COMPLETED: uma recompensa de período anterior não resgatada é
+  //    perdida no virar do período (comportamento de ciclo diário), senão a
+  //    missão fica presa "concluída" para sempre e a caixa diária vira grátis.
   const staleMissions = await prisma.userMission.findMany({
     where: {
       userId,
-      status: { in: ['ACTIVE', 'CLAIMED'] },
+      status: { in: ['ACTIVE', 'CLAIMED', 'COMPLETED'] },
       mission: { type: { in: ['DAILY', 'WEEKLY', 'MONTHLY'] } },
       OR: [
         { mission: { type: 'DAILY' }, assignedAt: { lt: today } },
