@@ -16,6 +16,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:modules": "tsx prisma/seed-modules.ts",
     "db:rebalance": "tsx prisma/rebalance-items.ts",
+    "db:demo": "tsx prisma/make-demo.ts",
     "db:studio": "prisma studio",
     "setup": "npm run db:generate && npm run db:push && npm run db:seed"
   },
