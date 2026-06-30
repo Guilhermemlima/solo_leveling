@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
+import { ItemFilterBar } from '@/components/game/ItemFilterBar'
+import { filterSortItems, type SortDir } from '@/lib/item-sort'
 
 const RARITY_COLOR: Record<string, string> = {
   COMMON: '#94a3b8', UNCOMMON: '#22c55e', RARE: '#3b82f6',
@@ -27,6 +29,8 @@ export default function ForgePage() {
   const [tab, setTab] = useState<Tab>('forge')
   const [selected, setSelected] = useState<any>(null)
   const [mergeSelected, setMergeSelected] = useState<string[]>([])
+  const [rarity, setRarity] = useState('')
+  const [dir, setDir] = useState<SortDir>('asc')
   const [working, setWorking] = useState(false)
   const [lastResult, setLastResult] = useState<{ success: boolean; message: string } | null>(null)
   const { toast } = useToast()
@@ -107,8 +111,12 @@ export default function ForgePage() {
 
   const sel = selected ? data.items.find((i: any) => i.id === selected.id) ?? selected : null
 
+  // Filtro/ordenação por raridade
+  const sortOpts = { rarity, dir, getRarity: (i: any) => i.rarity, getBonus: (i: any) => (i.bonusValue ?? 0) + (i.upgradeLevel ?? 0) * 0.1 }
+  const forgeItems = filterSortItems(data.items, sortOpts)
+
   // Merge logic
-  const mergeItems = data.items.filter((i: any) => !i.isEquipped)
+  const mergeItems = filterSortItems(data.items.filter((i: any) => !i.isEquipped), sortOpts)
   const selectedMergeItems = mergeItems.filter((i: any) => mergeSelected.includes(i.id))
   const mergeRarities = [...new Set(selectedMergeItems.map((i: any) => i.equipment?.rarity ?? i.rarity))]
   const mergeTypes = [...new Set(selectedMergeItems.map((i: any) => i.equipment?.type ?? i.type))]
@@ -157,12 +165,13 @@ export default function ForgePage() {
           {/* Item list */}
           <div className="space-y-2">
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Seus Equipamentos</p>
+            {data.items.length > 0 && <ItemFilterBar rarity={rarity} setRarity={setRarity} dir={dir} setDir={setDir} />}
             {data.items.length === 0 && (
               <div className="glass rounded-2xl p-8 text-center border border-slate-700/30">
                 <p className="text-slate-400 text-sm">Você ainda não possui equipamentos.</p>
               </div>
             )}
-            {data.items.map((item: any) => {
+            {forgeItems.map((item: any) => {
               const color = RARITY_COLOR[item.rarity]
               const isSel = sel?.id === item.id
               return (
@@ -294,6 +303,7 @@ export default function ForgePage() {
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Selecione 3 itens da mesma raridade (qualquer tipo)</p>
               <p className="text-xs text-slate-600">Itens equipados não podem ser fundidos</p>
             </div>
+            <ItemFilterBar rarity={rarity} setRarity={setRarity} dir={dir} setDir={setDir} />
             {mergeItems.length === 0 && (
               <div className="glass rounded-2xl p-8 text-center border border-slate-700/30">
                 <p className="text-slate-400 text-sm">Nenhum item disponível para fusão.</p>

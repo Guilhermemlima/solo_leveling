@@ -8,6 +8,8 @@ import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { RARITY_COLORS, RARITY_LABELS, EQUIP_TYPE_LABELS } from '@/lib/game-logic'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
+import { ItemFilterBar } from '@/components/game/ItemFilterBar'
+import { filterSortItems, type SortDir } from '@/lib/item-sort'
 
 const BONUS_LABELS: Record<string, string> = {
   strength: 'Força', vitality: 'Vitalidade', intelligence: 'Inteligência',
@@ -31,6 +33,8 @@ export default function InventoryPage() {
   const [equipping, setEquipping] = useState<string | null>(null)
   const [selling, setSelling] = useState<string | null>(null)
   const [confirmSell, setConfirmSell] = useState<any | null>(null)
+  const [rarity, setRarity] = useState('')
+  const [dir, setDir] = useState<SortDir>('asc')
   const { toast } = useToast()
   const { refreshUser } = useAuth()
   const router = useRouter()
@@ -70,8 +74,9 @@ export default function InventoryPage() {
     finally { setSelling(null) }
   }
 
-  const equipped = inventory.filter(i => i.isEquipped)
-  const unequipped = inventory.filter(i => !i.isEquipped)
+  const sortOpts = { rarity, dir, getRarity: (i: any) => i.equipment.rarity, getBonus: (i: any) => (i.equipment.bonusValue ?? 0) + i.upgradeLevel * 0.1 }
+  const equipped = filterSortItems(inventory.filter(i => i.isEquipped), sortOpts)
+  const unequipped = filterSortItems(inventory.filter(i => !i.isEquipped), sortOpts)
 
   return (
     <div className="space-y-6">
@@ -128,6 +133,7 @@ export default function InventoryPage() {
         </div>
       ) : (
         <>
+          <ItemFilterBar rarity={rarity} setRarity={setRarity} dir={dir} setDir={setDir} />
           {equipped.length > 0 && (
             <div>
               <h2 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2"><Shield size={16} /> Equipados</h2>
