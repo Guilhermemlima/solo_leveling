@@ -15,6 +15,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!item) return NextResponse.json({ error: 'Item não encontrado' }, { status: 404 })
 
+  // Itens "Conjunto" são pacotes da loja (concedem as 4 peças) — não são equipáveis.
+  if (item.equipment.isFullSet) {
+    return NextResponse.json({ error: 'O Conjunto é um pacote — equipe as peças individuais (elmo, peitoral, calça, botas).' }, { status: 400 })
+  }
+
   if (item.isEquipped) {
     await prisma.inventory.update({ where: { id }, data: { isEquipped: false } })
     return NextResponse.json({ message: 'Item desequipado', isEquipped: false })

@@ -32,8 +32,8 @@ async function main() {
     create: { userId: uid, strength: 250, intelligence: 250, discipline: 250, focus: 250, vitality: 250, charisma: 250, wisdom: 250, creativity: 250 },
   })
 
-  // 3) Todos os equipamentos (1 de cada que ainda não tem)
-  const allEq = await p.equipment.findMany({ select: { id: true } })
+  // 3) Todos os equipamentos (exceto itens-conjunto, que são pacotes da loja)
+  const allEq = await p.equipment.findMany({ where: { isFullSet: false }, select: { id: true } })
   const owned = new Set((await p.inventory.findMany({ where: { userId: uid }, select: { equipmentId: true } })).map(i => i.equipmentId))
   const toAdd = allEq.filter(e => !owned.has(e.id))
   if (toAdd.length) await p.inventory.createMany({ data: toAdd.map(e => ({ userId: uid, equipmentId: e.id })) })

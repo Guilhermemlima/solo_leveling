@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         return ok('Atributos no máximo (250)')
 
       case 'grantAllItems': {
-        const all = await prisma.equipment.findMany({ select: { id: true } })
+        const all = await prisma.equipment.findMany({ where: { isFullSet: false }, select: { id: true } })
         const owned = new Set((await prisma.inventory.findMany({ where: { userId: uid }, select: { equipmentId: true } })).map(i => i.equipmentId))
         const add = all.filter(e => !owned.has(e.id))
         if (add.length) await prisma.inventory.createMany({ data: add.map(e => ({ userId: uid, equipmentId: e.id })) })
