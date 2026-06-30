@@ -6,9 +6,10 @@ import { useEffect, useRef } from 'react'
 import {
   LayoutDashboard, CheckSquare, Target, User, Package, ShoppingBag,
   Trophy, Clock, BarChart3, Settings, LogOut, ChevronRight, Swords, Medal,
-  Layers3, BrainCircuit, Users, MessageCircle, Gift, Hammer, Wallet, Dumbbell
+  Layers3, BrainCircuit, Users, MessageCircle, Gift, Hammer, Wallet, Dumbbell, Terminal
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { isDevUser } from '@/lib/dev-auth'
 import { gsap, EASE_OUT_EXPO } from '@/lib/gsap-init'
 
 const navGroups = [
@@ -173,6 +174,19 @@ export function Sidebar() {
             </div>
           </div>
         ))}
+
+        {/* Dev (apenas para desenvolvedores) */}
+        {isDevUser(user?.email) && (
+          <div className="mt-4">
+            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-600/70">Dev</p>
+            <Link href="/dev"
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${pathname === '/dev' ? 'text-emerald-300' : 'text-slate-400 hover:text-slate-200 hover:bg-white/4'}`}
+              style={pathname === '/dev' ? { background: 'linear-gradient(90deg,rgba(16,185,129,0.14),rgba(16,185,129,0.04))' } : undefined}>
+              <Terminal size={17} className={pathname === '/dev' ? 'text-emerald-400' : 'text-slate-500'} />
+              Painel Dev
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Logout */}
