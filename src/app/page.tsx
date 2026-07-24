@@ -886,6 +886,7 @@ export default function LandingPage() {
         <p className="text-slate-700 text-xs mt-6">
           Ascend System é um produto de software de gamificação pessoal. Resultados dependem do uso consistente da plataforma.
         </p>
+        <p className="text-slate-800 text-[10px] mt-2">Awin</p>
       </footer>
     </main>
   );
